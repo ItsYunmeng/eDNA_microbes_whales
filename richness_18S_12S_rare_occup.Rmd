@@ -1,0 +1,95 @@
+---
+title: "Richness of 16S, 18S, COI, and 12S"
+author: "Anni Djurhuus"
+date: "15 August 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r read biom file 18S and 12S,echo=FALSE}
+#biocLite("phyloseq")
+library(phyloseq)
+#16S
+#m2w_18S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/M2W_18S_80per_NT_json_obs_md.biom")
+#m2w_18S <- subset_samples(m2w_18S, sample_type == "environmental")
+#metadata_18S <- m2w_18S@sam_data
+#otu_18S <- otu_table(m2w_18S, taxa_are_rows=TRUE)
+
+#18S
+m2w_18S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/M2W_18S_80per_NT_json_obs_md.biom")
+m2w_18S <- subset_samples(m2w_18S, sample_type == "environmental")
+metadata_18S <- m2w_18S@sam_data
+otu_18S <- otu_table(m2w_18S, taxa_are_rows=TRUE)
+#12S
+m2w_COI <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/COI_m2w_twostep_json_obs_md.biom")
+m2w_COI <- subset_samples(m2w_COI, sample_type == "environmental")
+m2w_COI <- subset_samples(m2w_COI, DEPTH_M == 0)
+metadata_COI <- m2w_COI@sam_data
+otu_COI <- otu_table(m2w_COI, taxa_are_rows=TRUE)
+#12S
+m2w_12S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/MB_json_obs_md.biom")
+m2w_12S <- subset_samples(m2w_12S, sample_type == "environmental")
+otu_12S <- otu_table(m2w_12S, taxa_are_rows=TRUE)
+metadata_12S <- m2w_12S@sam_data
+```
+
+##plot richness for 12S and 18S
+```{r Plot richness for 12S and 18S,echo=FALSE}
+#install.packages("cowplot")
+require(cowplot)
+p <- plot_richness(m2w_18S,x="DATE_TIME_GMT",title="18S",measures = "Observed") + theme(axis.title.x=element_blank())
+p <- p + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+p <- p + geom_boxplot(outlier.color = NA, fill=NA)
+p + geom_point(size=5, alpha=0.4)
+
+p2 <- plot_richness(m2w_COI,x="DATE_TIME_GMT",title="COI",measures = "Observed") + theme(axis.title.x=element_blank())
+p2 <- p2 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+p2 <- p2 + geom_boxplot(outlier.color = NA, fill=NA)
+p2 + geom_point(size=5, alpha=0.4)
+
+p1 <- plot_richness(m2w_12S,x="library",title="12S",measures = "Observed") + theme(axis.title.x=element_blank())
+p1 <- p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+p1 <- p1 + geom_boxplot(outlier.color = NA, fill=NA)
+p1 + geom_point(size=5, alpha=0.4)
+#plot_grid(p, p1, p2, labels = c("A", "B", "C"), align="h")
+```
+
+####Number of sequences per sample
+```{r rarefy sequences}
+colSums(otu_16S)
+colSums(otu_18S)
+colSums(otu_COI)
+colSums(otu_12S)
+
+#rare_16S = rarefy_even_depth(m2w_16S)
+rare_18S = rarefy_even_depth(m2w_18S)
+#rare_12S = rarefy_even_depth(m2w_12S)
+rare_COI = rarefy_even_depth(m2w_COI)
+
+```
+
+
+```{r Plot richness for 12S and 18S post rarefication,echo=FALSE}
+#install.packages("cowplot")
+require(cowplot)
+p3 <- plot_richness(rare_18S,x="DATE_TIME_GMT",title="18S",measures = "Observed") + theme(axis.title.x=element_blank())
+p3 <- p3 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+p3 <- p3 + geom_boxplot(outlier.color = NA, fill=NA)
+p3 + geom_point(size=5, alpha=0.4)
+
+# p1 <- plot_richness(m2w_12S,x="library",title="12S",measures = "Observed") + theme(axis.title.x=element_blank())
+# p1 <- p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+# p1 <- p1 + geom_boxplot(outlier.color = NA, fill=NA)
+# p1 + geom_point(size=5, alpha=0.4)
+# 
+p5 <- plot_richness(rare_COI,x="DATE_TIME_GMT",title="COI",measures = "Observed") + theme(axis.title.x=element_blank())
+p5 <- p5 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+p5 <- p5 + geom_boxplot(outlier.color = NA, fill=NA)
+p5 + geom_point(size=5, alpha=0.4)
+ 
+# #plot_grid(p3, p4, p5, labels = c("A", "B", "C"),align="h")
+```
+

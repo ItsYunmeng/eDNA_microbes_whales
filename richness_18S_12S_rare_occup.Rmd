@@ -22,6 +22,7 @@ m2w_18S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/M2W
 m2w_18S <- subset_samples(m2w_18S, sample_type == "environmental")
 metadata_18S <- m2w_18S@sam_data
 otu_18S <- otu_table(m2w_18S, taxa_are_rows=TRUE)
+b <- as.data.frame(otu_18S)
 tax_18S <- tax_table(m2w_18S)
 #12S
 m2w_COI <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/COI_m2w_twostep_json_obs_md.biom")
@@ -115,13 +116,39 @@ library(DESeq2)
 #m2w_18S2 <- otu_table(deseq_18s, taxa_are_rows = TRUE)
 
 #18S
-#deseq_18s = phyloseq_to_deseq2(m2w_18S, ~ DATE_TIME_GMT)
-#deseq_18s = DESeq(deseq_18s, test="Wald", fitType="parametric")
-#deseq_18s = estimateSizeFactors(deseq_18s)
-#deseq_18s <- counts(deseq_18s, normalized=TRUE)
-#otu2_18S <- otu_table(deseq_18s, taxa_are_rows = TRUE)
-#m2w_18S2 <- merge_phyloseq(metadata_18S,otu2_18S,tax_18S)
-  
+deseq_18s = phyloseq_to_deseq2(m2w_18S, ~ DATE_TIME_GMT)
+deseq_18s = DESeq(deseq_18s, test="Wald", fitType="parametric")
+
+res = results(deseq_18s, cooksCutoff = FALSE)
+alpha = 0.01
+sigtab = res[which(res$padj < alpha), ]
+sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(m2w_18S)[rownames(sigtab), ], "matrix"))
+head(sigtab)
+
+library("ggplot2")
+theme_set(theme_bw())
+scale_fill_discrete <- function(palname = "Set1", ...) {
+    scale_fill_brewer(palette = palname, ...)
+}
+# Phylum order
+x = tapply(sigtab$log2FoldChange, sigtab$Rank1, function(x) max(x))
+x = sort(x, TRUE)
+sigtab$Rank1 = factor(as.character(sigtab$Rank1), levels=names(x))
+# Genus order
+x = tapply(sigtab$log2FoldChange, sigtab$Rank6, function(x) max(x))
+x = sort(x, TRUE)
+sigtab$Rank6 = factor(as.character(sigtab$Rank6), levels=names(x))
+ggplot(sigtab, aes(x=Rank6, y=log2FoldChange, color=Rank1)) + geom_point(size=6) + 
+  theme(axis.text.x = element_text(angle = -90, hjust = 0, vjust=0.5))
+
+
+deseq_18s = estimateSizeFactors(deseq_18s)
+deseq_18s <- counts(deseq_18s, normalized=TRUE)
+a <- as.data.frame(deseq_18s)
+otu2_18S <- otu_table(deseq_18s, taxa_are_rows = TRUE)
+m2w_18S2 <- merge_phyloseq(metadata_18S,otu2_18S,tax_18S)
+
+
 #COI
 #deseq_COI = phyloseq_to_deseq2(m2w_COI, ~ DATE_TIME_GMT)
 # deseq_COI = DESeq(deseq_COI, test="Wald", fitType="parametric")
@@ -150,11 +177,12 @@ library(DESeq2)
 ```
 
 
-Compare all
+#Compare all
 ```{r}
-plot_grid(p1, p5, labels = c("A", "B"),align="h", nrow=2)
-plot_grid(p2, p6, labels = c("A", "B"),align="h", nrow=2)
-plot_grid(p3, p7, labels = c("A", "B"),align="h", nrow=2)
+#plot_grid(p1, p5)
+#, labels = c("A", "B"),align="h", nrow=2)
+#plot_grid(p2, p6, labels = c("A", "B"),align="h", nrow=2)
+#plot_grid(p3, p7, labels = c("A", "B"),align="h", nrow=2)
 ```
 
 

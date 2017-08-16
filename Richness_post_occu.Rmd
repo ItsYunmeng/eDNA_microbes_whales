@@ -10,7 +10,63 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-OTU_table_12S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/eDNA_methods/12S/OTU_table_12S.csv",header=TRUE, row.names=1) #12S
+#install.packages("lubridate")
+library(lubridate)
+
+#18S
+occu_18S=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/Occ_Model_18s.csv",header=TRUE, row.names=1)) #12S
+metadata_18S <- m2w_18S@sam_data
+b <- metadata_18S[seq(1, length(metadata_18S), 3)]
+b <- b[1:20,]
+
+binsum=apply(occu_18S, 1, sum)
+#Append row sums to binary table
+datasheet_binary = cbind(occu_18S, binsum)
+datasheet_binary = cbind(b, datasheet_binary)
+datasheet_binary <- datasheet_binary[1:16,]
+datasheet_binary$DATE_TIME_GMT <- ymd_hms(datasheet_binary$DATE_TIME_GMT)
+
+#COI
+occu_COI=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/Occ_Model_COI.csv",header=TRUE, row.names=1)) #12S
+metadata_COI <- m2w_COI@sam_data
+c <- metadata_COI[seq(1, length(metadata_COI), 3)]
+c <- b[1:20,]
+
+binsum_COI=apply(occu_COI, 1, sum)
+#Append row sums to binary table
+datasheet_binary_COI = cbind(occu_COI, binsum_COI)
+datasheet_binary_COI = cbind(c, datasheet_binary_COI)
+datasheet_binary_COI <- datasheet_binary_COI[1:16,]
+datasheet_binary_COI$DATE_TIME_GMT <- ymd_hms(datasheet_binary_COI$DATE_TIME_GMT)
+
+#12S
+occu_12S=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/Occ_Model_12S.csv",header=TRUE, row.names=1)) #12S
+metadata_12S <- m2w_12S@sam_data
+d <- metadata_12S[seq(1, length(metadata_12S), 3)]
+d <- d[1:17,]
+
+binsum_12S=apply(occu_12S, 1, sum)
+#Append row sums to binary table
+datasheet_binary_12S = cbind(occu_12S, binsum_12S)
+datasheet_binary_12S = cbind(d, datasheet_binary_12S)
+datasheet_binary_12S <- datasheet_binary_12S[1:16,]
+datasheet_binary_12S$DATE_TIME_GMT <- ymd_hms(datasheet_binary_12S$DATE_TIME_GMT)
+
+#PLOTS 
+plot(datasheet_binary$binsum~datasheet_binary$DATE_TIME_GMT, type="o", pch=16, ylim=c(0,1400),col="#E41A1C", xlab="Date", ylab="Observed richness")
+par(new=TRUE)
+plot(datasheet_binary_COI$binsum~datasheet_binary_COI$DATE_TIME_GMT, ylim=c(0,1400),type="o", pch=16, col="#377EB8", xlab="Date", ylab="Observed richness")
+par(new=TRUE)
+plot(datasheet_binary_12S$binsum~datasheet_binary_12S$DATE_TIME_GMT, ylim=c(0,150),type="o", pch=16, col="black", xlab="Date", ylab="Observed richness")
+par(new=TRUE)
+plot(datasheet_binary_COI$TMP_C~datasheet_binary_COI$DATE_TIME_GMT,type="l",lwd=2,lty=2, pch=16, col="grey", xlab="Date", ylab="Observed richness")
+
+
+legend("topleft",legend=c("18S","COI", "12S"), pch=c(16,16,16), col=c("#E41A1C","#377EB8","black"))
+
+
+
+plot(datasheet_binary_12S$binsum, datasheet_binary_COI$binsum_COI)
 
 ```
 

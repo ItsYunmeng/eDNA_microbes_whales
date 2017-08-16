@@ -1,0 +1,16 @@
+---
+title: "richness post occupancy"
+author: "Anni Djurhuus"
+date: "16 August 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+OTU_table_12S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/eDNA_methods/12S/OTU_table_12S.csv",header=TRUE, row.names=1) #12S
+
+```
+

@@ -23,13 +23,14 @@ m2w_18S <- subset_samples(m2w_18S, sample_type == "environmental")
 metadata_18S <- m2w_18S@sam_data
 otu_18S <- otu_table(m2w_18S, taxa_are_rows=TRUE)
 b <- as.data.frame(otu_18S)
-tax_18S <- tax_table(m2w_18S)
+tax_18S <- as.data.frame(tax_table(m2w_18S))
 #12S
 m2w_COI <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/COI_m2w_twostep_json_obs_md.biom")
 m2w_COI <- subset_samples(m2w_COI, sample_type == "environmental")
 m2w_COI <- subset_samples(m2w_COI, DEPTH_M == 0)
 metadata_COI <- m2w_COI@sam_data
 otu_COI <- otu_table(m2w_COI, taxa_are_rows=TRUE)
+tax_COI <- as.data.frame(tax_table(m2w_COI))
 #12S
 m2w_12S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/m2w_12S_MB_20170815_json_obs_md.biom")
 m2w_12S <- subset_samples(m2w_12S, sample_names(m2w_12S) != "ArtComm_HS_1" & sample_names(m2w_12S) != "ArtComm_HS_2" & sample_names(m2w_12S) !="ArtComm_HS_3" & sample_names(m2w_12S) !="CB_CANON160925_1" & sample_names(m2w_12S) !="CB_CANON160925_2" & sample_names(m2w_12S) !="CB_CANON160925_3" & sample_names(m2w_12S) !="EB_11.16.16" & sample_names(m2w_12S) !="EB_11.21.16" & sample_names(m2w_12S) !="EB_12.28.16" & sample_names(m2w_12S) !="NTC_pool_1" & sample_names(m2w_12S) !="NTC_pool_2" & sample_names(m2w_12S) !="NTC_pool_3")
@@ -190,4 +191,131 @@ m2w_18S2 <- merge_phyloseq(metadata_18S,otu2_18S,tax_18S)
 #```{r richness post rarefication and occupancy}
 #load("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/OccData18s_COI_rarefied.Rdata")
 #```
+
+
+```{r Richness post rarefaction and occupancy modelling}
+#install.packages("lubridate")
+library(lubridate)
+
+#18S
+occu_18S=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/Occ_Model_18s.csv",header=TRUE, row.names=1)) #12S
+metadata_18S <- m2w_18S@sam_data
+b <- metadata_18S[seq(1, length(metadata_18S), 3)]
+b <- b[1:20,]
+
+binsum=apply(occu_18S, 1, sum)
+#Append row sums to binary table
+datasheet_binary = cbind(occu_18S, binsum)
+datasheet_binary = cbind(b, datasheet_binary)
+datasheet_binary <- datasheet_binary[1:16,]
+datasheet_binary$DATE_TIME_GMT <- ymd_hms(datasheet_binary$DATE_TIME_GMT)
+
+#COI
+occu_COI=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/Occ_Model_COI.csv",header=TRUE, row.names=1)) #12S
+metadata_COI <- m2w_COI@sam_data
+c <- metadata_COI[seq(1, length(metadata_COI), 3)]
+c <- c[1:20,]
+
+binsum_COI=apply(occu_COI, 1, sum)
+#Append row sums to binary table
+datasheet_binary_COI = cbind(occu_COI, binsum_COI)
+datasheet_binary_COI = cbind(c, datasheet_binary_COI)
+datasheet_binary_COI <- datasheet_binary_COI[1:16,]
+datasheet_binary_COI$DATE_TIME_GMT <- ymd_hms(datasheet_binary_COI$DATE_TIME_GMT)
+
+#12S
+occu_12S=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/Occ_Model_12S.csv",header=TRUE, row.names=1)) #12S
+metadata_12S <- m2w_12S@sam_data
+d <- metadata_12S[seq(1, length(metadata_12S), 3)]
+d <- d[1:17,]
+
+binsum_12S=apply(occu_12S, 1, sum)
+#Append row sums to binary table
+datasheet_binary_12S = cbind(occu_12S, binsum_12S)
+datasheet_binary_12S = cbind(d, datasheet_binary_12S)
+datasheet_binary_12S <- datasheet_binary_12S[1:16,]
+datasheet_binary_12S$DATE_TIME_GMT <- ymd_hms(datasheet_binary_12S$DATE_TIME_GMT)
+
+#PLOTS 
+plot(datasheet_binary$binsum~datasheet_binary$DATE_TIME_GMT, type="o", pch=16, ylim=c(0,1400),col="#E41A1C", xlab="Date", ylab="Observed richness")
+par(new=TRUE)
+plot(datasheet_binary_COI$binsum~datasheet_binary_COI$DATE_TIME_GMT, ylim=c(0,1400),type="o", pch=16, col="#377EB8", xlab="Date", ylab="Observed richness")
+par(new=TRUE)
+plot(datasheet_binary_12S$binsum~datasheet_binary_12S$DATE_TIME_GMT, ylim=c(0,150),type="o", pch=16, col="black", xlab="Date", ylab="Observed richness")
+par(new=TRUE)
+plot(datasheet_binary_COI$TMP_C~datasheet_binary_COI$DATE_TIME_GMT,type="l",lwd=2,lty=2, pch=16, col="grey", xlab="Date", ylab="Observed richness")
+
+
+legend("topleft",legend=c("18S","COI", "12S"), pch=c(16,16,16), col=c("#E41A1C","#377EB8","black"))
+
+
+plot(datasheet_binary$binsum, datasheet_binary$TMP_C)
+plot(datasheet_binary_COI$binsum, datasheet_binary_COI$TMP_C)
+plot(datasheet_binary_12S$binsum, datasheet_binary_12S$TMP_C)
+
+```
+
+```{r richness by taxa post rarefaction plus occupancy modelling}
+#18S
+taxa_18S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/Occ_Model_18S_taxa.csv",header=TRUE, row.names=1) #18S
+
+taxa_grouped_18S <- tax_table(as.matrix(taxa_18S[1:7]))
+otu_18S <- otu_table(taxa_18S[8:27], taxa_are_rows=TRUE)
+row.names(b) <- sample_names(otu_18S)
+taxa_grouped_18S <- merge_phyloseq(taxa_grouped_18S,otu_18S,b)
+
+genus_glom_18S = tax_glom(taxa_grouped_18S, "Genus")
+family_glom_18S = tax_glom(taxa_grouped_18S, "Family")
+
+glom_18S_p1 <- plot_richness(genus_glom_18S,x="DATE_TIME_GMT",title="18S Genus",measures = "Observed") + theme(axis.title.x=element_blank())
+glom_18S_p1 <- glom_18S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+glom_18S_p1 <- glom_18S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+glom_18S_p1 + geom_point(size=5, alpha=0.4)
+
+fam_glom_18S_p1 <- plot_richness(genus_glom_18S,x="DATE_TIME_GMT",title="18S Family",measures = "Observed") + theme(axis.title.x=element_blank())
+fam_glom_18S_p1 <- fam_glom_18S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+fam_glom_18S_p1 <- fam_glom_18S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+fam_glom_18S_p1 + geom_point(size=5, alpha=0.4)
+
+#COI
+taxa_COI=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/Occ_Model_COI_taxa.csv",header=TRUE, row.names=1) #COI
+taxa_grouped_COI <- tax_table(as.matrix(taxa_COI[1:7]))
+otu_COI <- otu_table(taxa_COI[8:27], taxa_are_rows=TRUE)
+row.names(c) <- sample_names(otu_COI)
+taxa_grouped_COI <- merge_phyloseq(taxa_grouped_COI,otu_COI,c)
+
+genus_glom_COI = tax_glom(taxa_grouped_COI, "Genus")
+family_glom_COI = tax_glom(taxa_grouped_COI, "Family")
+
+glom_COI_p1 <- plot_richness(genus_glom_COI,x="DATE_TIME_GMT",title="COI Genus",measures = "Observed") + theme(axis.title.x=element_blank())
+glom_COI_p1 <- glom_COI_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+glom_COI_p1 <- glom_COI_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+glom_COI_p1 + geom_point(size=5, alpha=0.4)
+
+fam_glom_COI_p1 <- plot_richness(family_glom_COI,x="DATE_TIME_GMT",title="COI Family",measures = "Observed") + theme(axis.title.x=element_blank())
+fam_glom_COI_p1 <- fam_glom_COI_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+fam_glom_COI_p1 <- fam_glom_COI_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+fam_glom_COI_p1 + geom_point(size=5, alpha=0.4)
+
+#12S
+taxa_12S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/Occ_Model_12S_taxa.csv",header=TRUE, row.names=1) #12S
+
+taxa_grouped_12S <- tax_table(as.matrix(taxa_12S[1:7]))
+otu_12S <- otu_table(taxa_12S[8:24], taxa_are_rows=TRUE)
+row.names(d) <- sample_names(otu_12S)
+taxa_grouped_12S <- merge_phyloseq(taxa_grouped_12S,otu_12S,c)
+
+genus_glom_12S = tax_glom(taxa_grouped_12S, "Genus")
+family_glom_12S = tax_glom(taxa_grouped_12S, "Family")
+
+glom_12S_p1 <- plot_richness(genus_glom_12S,x="DATE_TIME_GMT",title="COI Genus",measures = "Observed") + theme(axis.title.x=element_blank())
+glom_12S_p1 <- glom_12S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+glom_12S_p1 <- glom_12S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+glom_12S_p1 + geom_point(size=5, alpha=0.4)
+
+fam_glom_12S_p1 <- plot_richness(family_glom_12S,x="DATE_TIME_GMT",title="COI Family",measures = "Observed") + theme(axis.title.x=element_blank())
+fam_glom_12S_p1 <- fam_glom_12S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+fam_glom_12S_p1 <- fam_glom_12S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+fam_glom_12S_p1 + geom_point(size=5, alpha=0.4)
+```
 

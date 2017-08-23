@@ -107,7 +107,7 @@ p7 + geom_point(size=5, alpha=0.4)
 
 
 #DESeq2
-```{r DESeq2}
+```{r DESeq2,echo=FALSE}
 library(DESeq2)
 #16S
 #deseq_18s = phyloseq_to_deseq2(m2w_18S, ~ DATE_TIME_GMT)
@@ -167,32 +167,8 @@ m2w_18S2 <- merge_phyloseq(metadata_18S,otu2_18S,tax_18S)
 
 ```
 
-```{r plots of richness post DESeq2}
-#p8 <- plot_richness(m2w_18S2,x="DATE_TIME_GMT",title="18S",measures = "Observed") + theme(axis.title.x=element_blank())
-#p8 <- p8 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
-#p8 <- p8 + geom_boxplot(outlier.color = NA, fill=NA)
-#p8 + geom_point(size=5, alpha=0.4)
 
-# #plot_grid(p3, p4, p5, labels = c("A", "B", "C"),align="h")
-
-```
-
-
-#Compare all
-```{r}
-#plot_grid(p1, p5)
-#, labels = c("A", "B"),align="h", nrow=2)
-#plot_grid(p2, p6, labels = c("A", "B"),align="h", nrow=2)
-#plot_grid(p3, p7, labels = c("A", "B"),align="h", nrow=2)
-```
-
-
-
-#```{r richness post rarefication and occupancy}
-#load("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/OccData18s_COI_rarefied.Rdata")
-#```
-
-
+#Observed richness post rarefaction and occupancy modelling
 ```{r Richness post rarefaction and occupancy modelling}
 #install.packages("lubridate")
 library(lubridate)
@@ -252,9 +228,9 @@ legend("topleft",legend=c("18S","COI", "12S"), pch=c(16,16,16), col=c("#E41A1C",
 plot(datasheet_binary$binsum, datasheet_binary$TMP_C)
 plot(datasheet_binary_COI$binsum, datasheet_binary_COI$TMP_C)
 plot(datasheet_binary_12S$binsum, datasheet_binary_12S$TMP_C)
-
 ```
 
+#Richness by taxa post rarefaction and occupancy modelling
 ```{r richness by taxa post rarefaction plus occupancy modelling}
 #18S
 taxa_18S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/Occ_Model_18S_taxa.csv",header=TRUE, row.names=1) #18S
@@ -319,3 +295,18 @@ fam_glom_12S_p1 <- fam_glom_12S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
 fam_glom_12S_p1 + geom_point(size=5, alpha=0.4)
 ```
 
+
+
+
+
+
+#Compare all
+```{r}
+library(cowplot)
+plot_grid(p1, p5)
+plot_grid(glom_18S_p1,fam_glom_18S_p1)
+plot_grid(p2, p6)
+plot_grid(glom_COI_p1,fam_glom_COI_p1)
+plot_grid(p3, p7)
+plot_grid(glom_12S_p1,fam_glom_12S_p1)
+```

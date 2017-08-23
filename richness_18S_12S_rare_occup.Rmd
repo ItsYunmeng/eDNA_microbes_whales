@@ -99,7 +99,7 @@ p6 <- p6 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p6 <- p6 + geom_boxplot(outlier.color = NA, fill=NA)
 p6 + geom_point(size=5, alpha=0.4)
 
-p7 <- plot_richness(m2w_12S,x="DATE_TIME_GMT",title="12S",measures = "Observed") + theme(axis.title.x=element_blank())
+p7 <- plot_richness(rare_12S,x="DATE_TIME_GMT",title="12S",measures = "Observed") + theme(axis.title.x=element_blank())
 p7 <- p7 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p7 <- p7 + geom_boxplot(outlier.color = NA, fill=NA)
 p7 + geom_point(size=5, alpha=0.4)
@@ -284,20 +284,16 @@ taxa_grouped_12S <- merge_phyloseq(taxa_grouped_12S,otu_12S,c)
 genus_glom_12S = tax_glom(taxa_grouped_12S, "Genus")
 family_glom_12S = tax_glom(taxa_grouped_12S, "Family")
 
-glom_12S_p1 <- plot_richness(genus_glom_12S,x="DATE_TIME_GMT",title="COI Genus",measures = "Observed") + theme(axis.title.x=element_blank())
+glom_12S_p1 <- plot_richness(genus_glom_12S,x="DATE_TIME_GMT",title="12S Genus",measures = "Observed") + theme(axis.title.x=element_blank())
 glom_12S_p1 <- glom_12S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 glom_12S_p1 <- glom_12S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
 glom_12S_p1 + geom_point(size=5, alpha=0.4)
 
-fam_glom_12S_p1 <- plot_richness(family_glom_12S,x="DATE_TIME_GMT",title="COI Family",measures = "Observed") + theme(axis.title.x=element_blank())
+fam_glom_12S_p1 <- plot_richness(family_glom_12S,x="DATE_TIME_GMT",title="12S Family",measures = "Observed") + theme(axis.title.x=element_blank())
 fam_glom_12S_p1 <- fam_glom_12S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 fam_glom_12S_p1 <- fam_glom_12S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
 fam_glom_12S_p1 + geom_point(size=5, alpha=0.4)
 ```
-
-
-
-
 
 
 #Compare all

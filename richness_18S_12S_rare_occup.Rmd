@@ -18,7 +18,7 @@ library(phyloseq)
 #metadata_16S <- m2w_16S@sam_data
 #otu_16S <- otu_table(m2w_16S, taxa_are_rows=TRUE)
 #18S
-m2w_18S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/M2W_18S_80per_NT_json_obs_md.biom")
+m2w_18S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/MB/M2W_18S_80per_NT_json_obs_md.biom")
 m2w_18S <- subset_samples(m2w_18S, sample_type == "environmental")
 metadata_18S <- m2w_18S@sam_data
 otu_18S <- otu_table(m2w_18S, taxa_are_rows=TRUE)
@@ -99,7 +99,7 @@ p6 <- p6 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p6 <- p6 + geom_boxplot(outlier.color = NA, fill=NA)
 p6 + geom_point(size=5, alpha=0.4)
 
-p7 <- plot_richness(rare_12S,x="DATE_TIME_GMT",title="12S",measures = "Observed") + theme(axis.title.x=element_blank())
+p7 <- plot_richness(m2w_12S,x="DATE_TIME_GMT",title="12S",measures = "Observed") + theme(axis.title.x=element_blank())
 p7 <- p7 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p7 <- p7 + geom_boxplot(outlier.color = NA, fill=NA)
 p7 + geom_point(size=5, alpha=0.4)

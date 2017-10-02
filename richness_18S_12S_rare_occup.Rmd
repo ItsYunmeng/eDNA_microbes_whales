@@ -32,8 +32,8 @@ metadata_COI <- m2w_COI@sam_data
 otu_COI <- otu_table(m2w_COI, taxa_are_rows=TRUE)
 tax_COI <- as.data.frame(tax_table(m2w_COI))
 #12S
-m2w_12S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/m2w_12S_MB_20170815_json_obs_md.biom")
-m2w_12S <- subset_samples(m2w_12S, sample_names(m2w_12S) != "ArtComm_HS_1" & sample_names(m2w_12S) != "ArtComm_HS_2" & sample_names(m2w_12S) !="ArtComm_HS_3" & sample_names(m2w_12S) !="CB_CANON160925_1" & sample_names(m2w_12S) !="CB_CANON160925_2" & sample_names(m2w_12S) !="CB_CANON160925_3" & sample_names(m2w_12S) !="EB_11.16.16" & sample_names(m2w_12S) !="EB_11.21.16" & sample_names(m2w_12S) !="EB_12.28.16" & sample_names(m2w_12S) !="NTC_pool_1" & sample_names(m2w_12S) !="NTC_pool_2" & sample_names(m2w_12S) !="NTC_pool_3")
+m2w_12S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/MB_12S_NT_json_obs_md.biom")
+m2w_12S <- subset_samples(m2w_12S, sample_names(m2w_12S) != "ArtComm_HS_1" & sample_names(m2w_12S) != "ArtComm_HS_2" & sample_names(m2w_12S) !="ArtComm_HS_3" & sample_names(m2w_12S) !="CB_CANON160925_1" & sample_names(m2w_12S) !="CB_CANON160925_2" & sample_names(m2w_12S) !="CB_CANON160925_3" & sample_names(m2w_12S) !="EB_11162016" & sample_names(m2w_12S) !="EB_11212016" & sample_names(m2w_12S) !="EB_12282016" & sample_names(m2w_12S) !="NTC_pool_1" & sample_names(m2w_12S) !="NTC_pool_2" & sample_names(m2w_12S) !="NTC_pool_3")
 #m2w_12S <- subset_samples(m2w_12S, sample_type == "environmental")
 otu_12S <- otu_table(m2w_12S, taxa_are_rows=TRUE)
 metadata_12S <- m2w_12S@sam_data
@@ -174,7 +174,7 @@ m2w_18S2 <- merge_phyloseq(metadata_18S,otu2_18S,tax_18S)
 library(lubridate)
 
 #18S
-occu_18S=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/Occ_Model_18s.csv",header=TRUE, row.names=1)) #12S
+occu_18S=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/MB/Occ_Model_18s.csv",header=TRUE, row.names=1)) #12S
 metadata_18S <- m2w_18S@sam_data
 b <- metadata_18S[seq(1, length(metadata_18S), 3)]
 b <- b[1:20,]
@@ -233,7 +233,7 @@ plot(datasheet_binary_12S$binsum, datasheet_binary_12S$TMP_C)
 #Richness by taxa post rarefaction and occupancy modelling
 ```{r richness by taxa post rarefaction plus occupancy modelling}
 #18S
-taxa_18S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/Occ_Model_18S_taxa.csv",header=TRUE, row.names=1) #18S
+taxa_18S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/MB/Occ_Model_18S_taxa.csv",header=TRUE, row.names=1) #18S
 
 taxa_grouped_18S <- tax_table(as.matrix(taxa_18S[1:7]))
 otu_18S <- otu_table(taxa_18S[8:27], taxa_are_rows=TRUE)

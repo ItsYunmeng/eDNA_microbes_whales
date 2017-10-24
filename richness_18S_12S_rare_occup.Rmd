@@ -1,15 +1,20 @@
 ---
-title: "Richness of 16S, 18S, COI, and 12S"
+title: "Richness of 18S, COI, and 12S"
 author: "Anni Djurhuus"
 date: "15 August 2017"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
-```{r read biom file 18S and 12S,echo=FALSE}
+```{r read biom file 18S and 12S, include=FALSE}
+require(RColorBrewer)
+brewer.pal(9,"Set1")
+display.brewer.all()
+mypalette <- brewer.pal(9,"Set1")
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 #biocLite("phyloseq")
 library(phyloseq)
 #16S
@@ -17,57 +22,72 @@ library(phyloseq)
 #m2w_16S <- subset_samples(m2w_16S, sample_type == "environmental")
 #metadata_16S <- m2w_16S@sam_data
 #otu_16S <- otu_table(m2w_16S, taxa_are_rows=TRUE)
+
 #18S
 m2w_18S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/MB/M2W_18S_80per_NT_json_obs_md.biom")
 m2w_18S <- subset_samples(m2w_18S, sample_type == "environmental")
+m2w_18S <- subset_samples(m2w_18S, sample_names(m2w_18S) !="10706C1_0m_1_S51" & sample_names(m2w_18S) !="10706C1_0m_2_S52" & sample_names(m2w_18S) !="10706C1_0m_3_S53" & sample_names(m2w_18S) !="15806C1_0m_1_S54" & sample_names(m2w_18S) !="15806C1_0m_2_S55" & sample_names(m2w_18S) !="15806C1_0m_3_S56" & sample_names(m2w_18S) !="27006C1_0m_1_S57" & sample_names(m2w_18S) !="27006C1_0m_2_S58" & sample_names(m2w_18S) !="27006C1_0m_3_S59" & sample_names(m2w_18S) !="33306C1_0m_1_S60" & sample_names(m2w_18S) !="33306C1_0m_2_S61" & sample_names(m2w_18S) !="33306C1_0m_3_S62")
 metadata_18S <- m2w_18S@sam_data
+library(stringr)
+metadata_18S2 <- str_split_fixed(as.character(metadata_18S$DATE_TIME_GMT),' ', 2)
+colnames(metadata_18S2) <- c("YEAR_DATE","TIME")
+metadata_18S2b <- str_split_fixed(as.character(metadata_18S2[,1]),'-', 3)
+colnames(metadata_18S2b) <- c("year","month","day")
+season <- c("Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter","Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Autumn","Autumn","Autumn","Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter","Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter")
+metadata_18S <- sample_data(cbind(season,metadata_18S,metadata_18S2, metadata_18S2b))
+
 otu_18S <- otu_table(m2w_18S, taxa_are_rows=TRUE)
 b <- as.data.frame(otu_18S)
-tax_18S <- as.data.frame(tax_table(m2w_18S))
+#tax_18S <- as.data.frame(tax_table(m2w_18S))
+m2w_18S <- merge_phyloseq(metadata_18S,otu_18S)
+
 #12S
 m2w_COI <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/COI_m2w_twostep_json_obs_md.biom")
 m2w_COI <- subset_samples(m2w_COI, sample_type == "environmental")
+m2w_COI <- subset_samples(m2w_COI, sample_names(m2w_COI) !="JD10706c1_0m_1" & sample_names(m2w_COI) !="JD10706c1_0m_2" & sample_names(m2w_COI) !="JD10706c1_0m_3" & sample_names(m2w_COI) !="JD15806c1_0m_1" & sample_names(m2w_COI) !="JD15806c1_0m_2" & sample_names(m2w_COI) !="JD15806c1_0m_3" & sample_names(m2w_COI) !="JD27006c1_0m_1" & sample_names(m2w_COI) !="JD27006c1_0m_2" & sample_names(m2w_COI) !="JD27006c1_0m_3" & sample_names(m2w_COI) !="JD33306c1_0m_1" & sample_names(m2w_COI) !="JD33306c1_0m_2" & sample_names(m2w_COI) !="JD33306c1_0m_3")
 m2w_COI <- subset_samples(m2w_COI, DEPTH_M == 0)
 metadata_COI <- m2w_COI@sam_data
 otu_COI <- otu_table(m2w_COI, taxa_are_rows=TRUE)
 tax_COI <- as.data.frame(tax_table(m2w_COI))
 #12S
 m2w_12S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/MB_12S_NT_json_obs_md.biom")
-m2w_12S <- subset_samples(m2w_12S, sample_names(m2w_12S) != "ArtComm_HS_1" & sample_names(m2w_12S) != "ArtComm_HS_2" & sample_names(m2w_12S) !="ArtComm_HS_3" & sample_names(m2w_12S) !="CB_CANON160925_1" & sample_names(m2w_12S) !="CB_CANON160925_2" & sample_names(m2w_12S) !="CB_CANON160925_3" & sample_names(m2w_12S) !="EB_11162016" & sample_names(m2w_12S) !="EB_11212016" & sample_names(m2w_12S) !="EB_12282016" & sample_names(m2w_12S) !="NTC_pool_1" & sample_names(m2w_12S) !="NTC_pool_2" & sample_names(m2w_12S) !="NTC_pool_3")
+m2w_12S <- subset_samples(m2w_12S, sample_names(m2w_12S) != "ArtComm_HS_1" & sample_names(m2w_12S) != "ArtComm_HS_2" & sample_names(m2w_12S) !="ArtComm_HS_3" & sample_names(m2w_12S) !="CB_CANON160925_1" & sample_names(m2w_12S) !="CB_CANON160925_2" & sample_names(m2w_12S) !="CB_CANON160925_3" & sample_names(m2w_12S) !="EB_11162016" & sample_names(m2w_12S) !="EB_11212016" & sample_names(m2w_12S) !="EB_12282016" & sample_names(m2w_12S) !="NTC_pool_1" & sample_names(m2w_12S) !="NTC_pool_2" & sample_names(m2w_12S) !="NTC_pool_3" & sample_names(m2w_12S) !="JD10706c1_0m_1" & sample_names(m2w_12S) !="JD10706c1_0m_2" & sample_names(m2w_12S) !="JD10706c1_0m_3" & sample_names(m2w_12S) !="JD15806c1_0m_1" & sample_names(m2w_12S) !="JD15806c1_0m_2" & sample_names(m2w_12S) !="JD15806c1_0m_3" & sample_names(m2w_12S) !="JD27006c1_0m_1" & sample_names(m2w_12S) !="JD27006c1_0m_2" & sample_names(m2w_12S) !="JD27006c1_0m_3")
 #m2w_12S <- subset_samples(m2w_12S, sample_type == "environmental")
 otu_12S <- otu_table(m2w_12S, taxa_are_rows=TRUE)
 metadata_12S <- m2w_12S@sam_data
 #names(metadata_12S)
 ```
 
+
+```{r Plot richness for 12S and 18S,echo=FALSE, include=FALSE}
 #plot richness for 12S, COI, and 18S of raw sequences
-```{r Plot richness for 12S and 18S}
 #install.packages("cowplot")
 require(cowplot)
+library(ggplot2)
 #p <- plot_richness(m2w_16S,x="DATE_TIME_GMT",title="16S",measures = "Observed") + theme(axis.title.x=element_blank())
 #p <- p + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 #p <- p + geom_boxplot(outlier.color = NA, fill=NA)
 #p + geom_point(size=5, alpha=0.4)
 
-p1 <- plot_richness(m2w_18S,x="DATE_TIME_GMT",title="18S",measures = "Observed") + theme(axis.title.x=element_blank())
-p1 <- p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+p1 <- plot_richness(m2w_18S,x="YEAR_DATE",title="18S",measures = "Observed") + theme(axis.title.x=element_blank()) 
+#p1 <- p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p1 <- p1 + geom_boxplot(outlier.color = NA, fill=NA)
-p1 + geom_point(size=5, alpha=0.4)
+p1
 
 p2 <- plot_richness(m2w_COI,x="DATE_TIME_GMT",title="COI",measures = "Observed") + theme(axis.title.x=element_blank())
-p2 <- p2 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+#p2 <- p2 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p2 <- p2 + geom_boxplot(outlier.color = NA, fill=NA)
 p2 + geom_point(size=5, alpha=0.4)
 
 p3 <- plot_richness(m2w_12S,x="DATE_TIME_GMT",title="12S",measures = "Observed") + theme(axis.title.x=element_blank())
-p3 <- p3 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+#p3 <- p3 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p3 <- p3 + geom_boxplot(outlier.color = NA, fill=NA)
 p3 + geom_point(size=5, alpha=0.4)
 #plot_grid(p1, p2, p3, labels = c("A", "B", "C"), align="h")
 ```
 
-####Number of sequences per sample
-```{r rarefy sequences}
+
+```{r rarefy sequences, include=FALSE}
 #colSums(otu_16S)
 colSums(otu_18S)
 colSums(otu_COI)
@@ -77,11 +97,10 @@ colSums(otu_12S)
 rare_18S = rarefy_even_depth(m2w_18S)
 rare_COI = rarefy_even_depth(m2w_COI)
 rare_12S = rarefy_even_depth(m2w_12S)
-
 ```
 
+```{r Plot richness for 12S and 18S post rarefication,echo=FALSE, include=FALSE}
 #plots of richness post rarefaction
-```{r Plot richness for 12S and 18S post rarefication,echo=FALSE}
 #install.packages("cowplot")
 require(cowplot)
 #p4 <- plot_richness(rare_16S,x="DATE_TIME_GMT",title="16S",measures = "Observed") + theme(axis.title.x=element_blank())
@@ -89,25 +108,25 @@ require(cowplot)
 #p4 <- p4 + geom_boxplot(outlier.color = NA, fill=NA)
 #p4 + geom_point(size=5, alpha=0.4)
 
-p5 <- plot_richness(rare_18S,x="DATE_TIME_GMT",title="18S",measures = "Observed") + theme(axis.title.x=element_blank())
-p5 <- p5 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+p5 <- plot_richness(rare_18S,x="YEAR_DATE",title="18S",measures = "Observed") + theme(axis.title.x=element_blank())
+#p5 <- p5 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p5 <- p5 + geom_boxplot(outlier.color = NA, fill=NA)
-p5 + geom_point(size=5, alpha=0.4)
- 
+p5
+
 p6 <- plot_richness(rare_COI,x="DATE_TIME_GMT",title="COI",measures = "Observed") + theme(axis.title.x=element_blank())
-p6 <- p6 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+#p6 <- p6 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p6 <- p6 + geom_boxplot(outlier.color = NA, fill=NA)
 p6 + geom_point(size=5, alpha=0.4)
 
-p7 <- plot_richness(m2w_12S,x="DATE_TIME_GMT",title="12S",measures = "Observed") + theme(axis.title.x=element_blank())
-p7 <- p7 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+p7 <- plot_richness(rare_12S,x="DATE_TIME_GMT",title="12S",measures = "Observed") + theme(axis.title.x=element_blank())
+#p7 <- p7 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
 p7 <- p7 + geom_boxplot(outlier.color = NA, fill=NA)
 p7 + geom_point(size=5, alpha=0.4)
 ```
 
 
+```{r DESeq2, eval=FALSE, include=FALSE}
 #DESeq2
-```{r DESeq2,echo=FALSE}
 library(DESeq2)
 #16S
 #deseq_18s = phyloseq_to_deseq2(m2w_18S, ~ DATE_TIME_GMT)
@@ -142,13 +161,11 @@ sigtab$Rank6 = factor(as.character(sigtab$Rank6), levels=names(x))
 ggplot(sigtab, aes(x=Rank6, y=log2FoldChange, color=Rank1)) + geom_point(size=6) + 
   theme(axis.text.x = element_text(angle = -90, hjust = 0, vjust=0.5))
 
-
 deseq_18s = estimateSizeFactors(deseq_18s)
 deseq_18s <- counts(deseq_18s, normalized=TRUE)
 a <- as.data.frame(deseq_18s)
 otu2_18S <- otu_table(deseq_18s, taxa_are_rows = TRUE)
 m2w_18S2 <- merge_phyloseq(metadata_18S,otu2_18S,tax_18S)
-
 
 #COI
 #deseq_COI = phyloseq_to_deseq2(m2w_COI, ~ DATE_TIME_GMT)
@@ -168,141 +185,244 @@ m2w_18S2 <- merge_phyloseq(metadata_18S,otu2_18S,tax_18S)
 ```
 
 
+```{r Richness post rarefaction and occupancy modelling,echo=FALSE, include=FALSE}
 #Observed richness post rarefaction and occupancy modelling
-```{r Richness post rarefaction and occupancy modelling}
 #install.packages("lubridate")
 library(lubridate)
 
 #18S
-occu_18S=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/MB/Occ_Model_18s.csv",header=TRUE, row.names=1)) #12S
-metadata_18S <- m2w_18S@sam_data
+occu_18S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/MB/Occ_Model_18s_taxa2.csv",header=TRUE, row.names=1) #12S
+occu_18S <- occu_18S[,8:23]
+occu_18S <- t(occu_18S)
+meta_18S_occup <- m2w_18S@sam_data
 b <- metadata_18S[seq(1, length(metadata_18S), 3)]
-b <- b[1:20,]
-
+b <- b[1:16,]
+season2 <- c("Spring","Summer","Autumn","Winter","Spring","Summer","Autumn","Autumn","Spring","Summer","Autumn","Winter","Spring","Summer","Autumn","Winter")
 binsum=apply(occu_18S, 1, sum)
 #Append row sums to binary table
 datasheet_binary = cbind(occu_18S, binsum)
-datasheet_binary = cbind(b, datasheet_binary)
-datasheet_binary <- datasheet_binary[1:16,]
+datasheet_binary = cbind(b,season2, datasheet_binary)
+#datasheet_binary <- datasheet_binary[1:16,]
 datasheet_binary$DATE_TIME_GMT <- ymd_hms(datasheet_binary$DATE_TIME_GMT)
 
 #COI
-occu_COI=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/Occ_Model_COI.csv",header=TRUE, row.names=1)) #12S
+occu_COI=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/Occ_Model_COI_taxa2.csv",header=TRUE, row.names=1) #12S
+occu_COI <- occu_COI[,8:23]
+occu_COI <- t(occu_COI)
+
 metadata_COI <- m2w_COI@sam_data
 c <- metadata_COI[seq(1, length(metadata_COI), 3)]
-c <- c[1:20,]
-
+c <- c[1:16,]
+season <- c("Spring","Summer","Autumn","Winter","Spring","Summer","Autumn","Autumn","Spring","Summer","Autumn","Winter","Spring","Summer","Autumn","Winter")
 binsum_COI=apply(occu_COI, 1, sum)
 #Append row sums to binary table
-datasheet_binary_COI = cbind(occu_COI, binsum_COI)
+datasheet_binary_COI = cbind(occu_COI, binsum_COI,season)
 datasheet_binary_COI = cbind(c, datasheet_binary_COI)
 datasheet_binary_COI <- datasheet_binary_COI[1:16,]
 datasheet_binary_COI$DATE_TIME_GMT <- ymd_hms(datasheet_binary_COI$DATE_TIME_GMT)
 
 #12S
-occu_12S=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/Occ_Model_12S.csv",header=TRUE, row.names=1)) #12S
-metadata_12S <- m2w_12S@sam_data
-d <- metadata_12S[seq(1, length(metadata_12S), 3)]
-d <- d[1:17,]
-
-binsum_12S=apply(occu_12S, 1, sum)
-#Append row sums to binary table
-datasheet_binary_12S = cbind(occu_12S, binsum_12S)
-datasheet_binary_12S = cbind(d, datasheet_binary_12S)
-datasheet_binary_12S <- datasheet_binary_12S[1:16,]
-datasheet_binary_12S$DATE_TIME_GMT <- ymd_hms(datasheet_binary_12S$DATE_TIME_GMT)
+# occu_12S=t(read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/Occ_Model_12S.csv",header=TRUE, row.names=1)) #12S
+# occu_12S <- occu_12S[c(-9,-13),]
+# metadata_12S <- m2w_12S@sam_data
+# d <- metadata_12S[seq(1, length(metadata_12S), 3)]
+# d <- d[1:14,]
+# 
+# binsum_12S=apply(occu_12S, 1, sum)
+# #Append row sums to binary table
+# datasheet_binary_12S = cbind(occu_12S, binsum_12S)
+# datasheet_binary_12S = cbind(d, datasheet_binary_12S)
+# datasheet_binary_12S <- datasheet_binary_12S[1:16,]
+# datasheet_binary_12S$DATE_TIME_GMT <- ymd_hms(datasheet_binary_12S$DATE_TIME_GMT)
 
 #PLOTS 
 plot(datasheet_binary$binsum~datasheet_binary$DATE_TIME_GMT, type="o", pch=16, ylim=c(0,1400),col="#E41A1C", xlab="Date", ylab="Observed richness")
 par(new=TRUE)
 plot(datasheet_binary_COI$binsum~datasheet_binary_COI$DATE_TIME_GMT, ylim=c(0,1400),type="o", pch=16, col="#377EB8", xlab="Date", ylab="Observed richness")
 par(new=TRUE)
-plot(datasheet_binary_12S$binsum~datasheet_binary_12S$DATE_TIME_GMT, ylim=c(0,150),type="o", pch=16, col="black", xlab="Date", ylab="Observed richness")
+#plot(datasheet_binary_12S$binsum~datasheet_binary_12S$DATE_TIME_GMT, ylim=c(0,150),type="o", pch=16, col="black", xlab="Date", ylab="Observed richness")
 par(new=TRUE)
 plot(datasheet_binary_COI$TMP_C~datasheet_binary_COI$DATE_TIME_GMT,type="l",lwd=2,lty=2, pch=16, col="grey", xlab="Date", ylab="Observed richness")
-
-
 legend("topleft",legend=c("18S","COI", "12S"), pch=c(16,16,16), col=c("#E41A1C","#377EB8","black"))
 
 
-plot(datasheet_binary$binsum, datasheet_binary$TMP_C)
-plot(datasheet_binary_COI$binsum, datasheet_binary_COI$TMP_C)
-plot(datasheet_binary_12S$binsum, datasheet_binary_12S$TMP_C)
+lm_temp_18S <- lm(TMP_C~binsum, data=datasheet_binary)
+newtemp_18s <- seq(min(datasheet_binary$binsum), max(datasheet_binary$binsum), 0.35)
+conf_lm_temp_18S <- predict(lm_temp_18S, newdata=data.frame(binsum=newtemp_18s), interval="confidence")
+summary(lm_temp_18S)
+
+pdf(file="/Users/anni_djurhuus/Documents/Projects/MBON/m2w/figs/18S_richness_temperature.pdf",width=5.5,height=7)
+plot(datasheet_binary$binsum, datasheet_binary$TMP_C,main="18S richness with temperature", col=c(cbbPalette[2], cbbPalette[3], cbbPalette[4], cbbPalette[5])[as.factor(datasheet_binary$season)], pch=c(16,17,15,18)[as.factor(datasheet_binary$year)],cex=1.8,xlab="Richness (OTUs)",ylab="Temperature")
+abline(lm_temp_18S, col="grey",lty=1)
+lines(newtemp_18s,conf_lm_temp_18S[,2], lty=3,col="grey")
+lines(newtemp_18s,conf_lm_temp_18S[,3], lty=3,col="grey")
+legend("topleft",ncol=2, bty="n",legend=c("Spring", "Summer","Autumn", "Winter","2013","2014","2015","2016"), col=c(cbbPalette[3], cbbPalette[2], cbbPalette[4], cbbPalette[5],"black","black","black","black"), pch=c(16,16,16,16,16,17,15,18))
+dev.off()
+
+plot(datasheet_binary_COI$binsum, datasheet_binary_COI$TMP_C,col=c(cbbPalette[2],cbbPalette[3],cbbPalette[4],cbbPalette[5])[as.factor(datasheet_binary$season)],pch=c(16,17,15,18)[as.factor(datasheet_binary$year)],cex=1.4)
+#plot(datasheet_binary_12S$binsum, datasheet_binary_12S$TMP_C)
 ```
 
+```{r richness by taxa post rarefaction plus occupancy modelling,echo=FALSE, include=FALSE}
 #Richness by taxa post rarefaction and occupancy modelling
-```{r richness by taxa post rarefaction plus occupancy modelling}
 #18S
-taxa_18S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/MB/Occ_Model_18S_taxa.csv",header=TRUE, row.names=1) #18S
-
+taxa_18S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/18S/MB/Occ_Model_18S_taxa2.csv",header=TRUE, row.names=1) 
+#18S
 taxa_grouped_18S <- tax_table(as.matrix(taxa_18S[1:7]))
-otu_18S <- otu_table(taxa_18S[8:27], taxa_are_rows=TRUE)
+otu_18S <- otu_table(taxa_18S[8:23], taxa_are_rows=TRUE)
+sample_names(otu_18S)
 row.names(b) <- sample_names(otu_18S)
-taxa_grouped_18S <- merge_phyloseq(taxa_grouped_18S,otu_18S,b)
 
+taxa_grouped_18S <- merge_phyloseq(taxa_grouped_18S,otu_18S,b)
 genus_glom_18S = tax_glom(taxa_grouped_18S, "Genus")
 family_glom_18S = tax_glom(taxa_grouped_18S, "Family")
 
-glom_18S_p1 <- plot_richness(genus_glom_18S,x="DATE_TIME_GMT",title="18S Genus",measures = "Observed") + theme(axis.title.x=element_blank())
-glom_18S_p1 <- glom_18S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
-glom_18S_p1 <- glom_18S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
-glom_18S_p1 + geom_point(size=5, alpha=0.4)
+glom_18S_p1 <- plot_richness(genus_glom_18S,x="YEAR_DATE",title="18S Genus",measures = "Observed") + theme(axis.title.x=element_blank())
+#glom_18S_p1 <- glom_18S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+#glom_18S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+#glom_18S_p1 + geom_point(size=5, alpha=0.4)
 
-fam_glom_18S_p1 <- plot_richness(genus_glom_18S,x="DATE_TIME_GMT",title="18S Family",measures = "Observed") + theme(axis.title.x=element_blank())
-fam_glom_18S_p1 <- fam_glom_18S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
-fam_glom_18S_p1 <- fam_glom_18S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
-fam_glom_18S_p1 + geom_point(size=5, alpha=0.4)
+fam_glom_18S_p1 <- plot_richness(family_glom_18S,x="YEAR_DATE",title="18S Family",measures = "Observed") + theme(axis.title.x=element_blank())
+#fam_glom_18S_p1 <- fam_glom_18S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+#fam_glom_18S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+#fam_glom_18S_p1 + geom_point(size=5, alpha=0.4)
+
+
+
+# otu_table_18S <- t(as.data.frame(zoo_18S@otu_table))
+# rare_meta_18S <- zoo_18S@sam_data
+# otu_meta_18S <- cbind(rare_meta_18S,otu_table_18S)
+# 
+# dist_18S=vegdist(otu_meta_18S[,c(44:ncol(otu_meta_18S))], method="bray")
+# clust.res_18S=hclust(dist_18S, method="average")
+# plot(clust.res_18S, labels=otu_meta_18S$de_replicate, hang=-1, cex=0.5, main=NULL, xlab="Sample") #or use labels=n if this doesn't work correctly
+# 
+# #NMDS 18S
+# otu_meta_18S_2 <- droplevels(otu_meta_18S)
+# nmds_18S <- metaMDS(otu_meta_18S[,c(44:ncol(otu_meta_18S))], distance="bray", trace = FALSE, trymax=100) 
+# 
+# xbac_18S <- nmds_18S$points[,1]
+# ybac_18S <- nmds_18S$points[,2]
+# 
+# pdf(file="/Users/anni_djurhuus/Documents/Projects/MBON/eDNA_zoo/fig/18S_NMDS.pdf", height=8, width=6)
+# plot(xbac_18S, ybac_18S, xlab="Coordinate 1",ylab="Coordinate 2",main="COI", col=c(col2[otu_meta_18S$de_replicate]), pch=c(15,16,17)[otu_meta_18S$type_sample], cex=1.7)
+# #text(nmds_18S$points[,1], nmds_18S$points[,2],labels=otu_meta_18S$Station,pos=3,cex=0.5) 
+# legend("bottomright",ncol=1, legend=c("PF-eDNA", "eDNA", "T-DNA"), cex=0.9,col=c("#999999"),pch=c(19,15,17))
+# beta_18S = betadiver(otu_meta_18S[,c(44:ncol(otu_meta_18S))], "z")
+# adonis(beta_18S ~ type_sample, data= otu_meta_18S, method="bray", perm=500) #make 
+# legend("topleft", legend=c("PERMANOVA, p=0.001996"),bty="n", cex=0.8)
+# dev.off()
+# 
 
 #COI
-taxa_COI=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/Occ_Model_COI_taxa.csv",header=TRUE, row.names=1) #COI
+taxa_COI=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/COI/Occ_Model_COI_taxa2.csv",header=TRUE, row.names=1) #COI
 taxa_grouped_COI <- tax_table(as.matrix(taxa_COI[1:7]))
-otu_COI <- otu_table(taxa_COI[8:27], taxa_are_rows=TRUE)
+otu_COI <- otu_table(taxa_COI[8:23], taxa_are_rows=TRUE)
 row.names(c) <- sample_names(otu_COI)
 taxa_grouped_COI <- merge_phyloseq(taxa_grouped_COI,otu_COI,c)
-
 genus_glom_COI = tax_glom(taxa_grouped_COI, "Genus")
 family_glom_COI = tax_glom(taxa_grouped_COI, "Family")
 
 glom_COI_p1 <- plot_richness(genus_glom_COI,x="DATE_TIME_GMT",title="COI Genus",measures = "Observed") + theme(axis.title.x=element_blank())
-glom_COI_p1 <- glom_COI_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
-glom_COI_p1 <- glom_COI_p1 + geom_boxplot(outlier.color = NA, fill=NA)
-glom_COI_p1 + geom_point(size=5, alpha=0.4)
 
 fam_glom_COI_p1 <- plot_richness(family_glom_COI,x="DATE_TIME_GMT",title="COI Family",measures = "Observed") + theme(axis.title.x=element_blank())
-fam_glom_COI_p1 <- fam_glom_COI_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
-fam_glom_COI_p1 <- fam_glom_COI_p1 + geom_boxplot(outlier.color = NA, fill=NA)
-fam_glom_COI_p1 + geom_point(size=5, alpha=0.4)
 
 #12S
-taxa_12S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/Occ_Model_12S_taxa.csv",header=TRUE, row.names=1) #12S
+#taxa_12S=read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/Occ_Model_12S_taxa.csv",header=TRUE, row.names=1) #12S
 
-taxa_grouped_12S <- tax_table(as.matrix(taxa_12S[1:7]))
-otu_12S <- otu_table(taxa_12S[8:24], taxa_are_rows=TRUE)
-row.names(d) <- sample_names(otu_12S)
-taxa_grouped_12S <- merge_phyloseq(taxa_grouped_12S,otu_12S,c)
+#taxa_grouped_12S <- tax_table(as.matrix(taxa_12S[1:7]))
+#otu_12S <- otu_table(taxa_12S[8:24], taxa_are_rows=TRUE)
+#row.names(d) <- sample_names(otu_12S)
+#taxa_grouped_12S <- merge_phyloseq(taxa_grouped_12S,otu_12S,c)
+#genus_glom_12S = tax_glom(taxa_grouped_12S, "Genus")
+#family_glom_12S = tax_glom(taxa_grouped_12S, "Family")
 
-genus_glom_12S = tax_glom(taxa_grouped_12S, "Genus")
-family_glom_12S = tax_glom(taxa_grouped_12S, "Family")
+#glom_12S_p1 <- plot_richness(genus_glom_12S,x="DATE_TIME_GMT",title="12S Genus",measures = "Observed") + theme(axis.title.x=element_blank())
+#glom_12S_p1 <- glom_12S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+#glom_12S_p1 <- glom_12S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+#glom_12S_p1 + geom_point(size=5, alpha=0.4)
 
-glom_12S_p1 <- plot_richness(genus_glom_12S,x="DATE_TIME_GMT",title="12S Genus",measures = "Observed") + theme(axis.title.x=element_blank())
-glom_12S_p1 <- glom_12S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
-glom_12S_p1 <- glom_12S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
-glom_12S_p1 + geom_point(size=5, alpha=0.4)
-
-fam_glom_12S_p1 <- plot_richness(family_glom_12S,x="DATE_TIME_GMT",title="12S Family",measures = "Observed") + theme(axis.title.x=element_blank())
-fam_glom_12S_p1 <- fam_glom_12S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
-fam_glom_12S_p1 <- fam_glom_12S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
-fam_glom_12S_p1 + geom_point(size=5, alpha=0.4)
+#fam_glom_12S_p1 <- plot_richness(family_glom_12S,x="DATE_TIME_GMT",title="12S Family",measures = "Observed") + theme(axis.title.x=element_blank())
+#fam_glom_12S_p1 <- fam_glom_12S_p1 + geom_point(size=5, alpha=0.4,position=position_jitter(width=0.1))
+#fam_glom_12S_p1 <- fam_glom_12S_p1 + geom_boxplot(outlier.color = NA, fill=NA)
+#fam_glom_12S_p1 + geom_point(size=5, alpha=0.4)
 ```
 
-
-#Compare all
-```{r}
+###18S
+#####18S OTU richness prior to rarefication and occupancy modeling (left) and post rarefication (right)
+```{r,echo=FALSE}
 library(cowplot)
 plot_grid(p1, p5)
-plot_grid(glom_18S_p1,fam_glom_18S_p1)
-plot_grid(p2, p6)
-plot_grid(glom_COI_p1,fam_glom_COI_p1)
-plot_grid(p3, p7)
-plot_grid(glom_12S_p1,fam_glom_12S_p1)
 ```
+
+#####18S taxa richness post occupancy modeling on genus (left) and family (right)
+```{r,echo=FALSE}
+library(cowplot)
+plot_grid(glom_18S_p1,fam_glom_18S_p1)
+```
+
+#####18S NMDS pre rarification and occupancy modelling 
+#######Bray-curtis distance matrix was used. The PERMANOVA showed significant differences between seasons, not years (df=3, p=0.001).
+```{r run ordination pre rarefy and occupancy, include=FALSE}
+ord_18S <- ordinate(m2w_18S, "NMDS", "bray")
+library(vegan)
+p_18S <-plot_ordination(m2w_18S, ord_18S, "samples",color="season")
+orddata_18S <- p_18S
+map.df_18S <- data.frame(sample_data(m2w_18S))
+dist_18S_pre <- phyloseq::distance(m2w_18S, method="bray")
+adonis(dist_18S_pre ~ year, data = map.df_18S)
+```
+
+```{r NMDS pre rarefication and occupancy, echo=FALSE, fig.height=5, fig.width=4}
+plot(x=orddata_18S$NMDS1, y=orddata_18S$NMDS2, type="n",main="18S pre occupancy and rarefication", xlim=c(-3,3), ylim=c(-2,3), xlab="NMDS1", ylab="NMDS2")
+points(ord_18S, disp="si",cex=1.4, col=c(cbbPalette[2], cbbPalette[3], cbbPalette[4], cbbPalette[5])[as.factor(map.df_18S$season)], pch=c(15,16,17,18)[map.df_18S$year])
+legend("topleft",ncol=2, bty="n",legend=c("Spring", "Summer","Autumn", "Winter","2013","2014","2015","2016"), col=c(cbbPalette[3], cbbPalette[2], cbbPalette[4], cbbPalette[5],"black","black","black","black"), pch=c(16,16,16,16,15,16,17,18))
+legend("bottomright", legend=c("PERMANOVA, p=0.001"),bty="n", cex=0.8)
+```
+
+#####18S NMDS post occupancy modelling
+#######Bray-curtis distance matrix was used. The PERMANOVA showed significant differences between seasons and years (df=3, p=0.001).
+```{r run ordination for 18S post occupancy,include=FALSE}
+ord_18S_occu <- ordinate(taxa_grouped_18S, "NMDS", "bray")
+library(vegan)
+p_18S_occu <-plot_ordination(taxa_grouped_18S, ord_18S_occu, "samples",color="season")
+orddata_18S_occu <- p_18S_occu
+map.df_18S_occu <- data.frame(sample_data(taxa_grouped_18S))
+dist_18S_occu <- phyloseq::distance(taxa_grouped_18S, method="bray")
+adonis(dist_18S_occu ~ season, data = map.df_18S_occu)
+```
+
+```{r NMDS post occupancy, echo=FALSE, fig.height=5, fig.width=4}
+plot(x=orddata_18S_occu$NMDS1, y=orddata_18S_occu$NMDS2,cex=1.4, type="n",main="18S pre occupancy and rarefication", xlim=c(-1.5,1.5), ylim=c(-1.5,1.0), xlab="Axis 1", ylab="Axis 2")
+points(ord_18S_occu, cex=1.4,disp="si", col=c(cbbPalette[2], cbbPalette[3], cbbPalette[4], cbbPalette[5])[as.factor(map.df_18S_occu$season)], pch=c(15,16,17,18)[map.df_18S_occu$year])
+legend("bottomright",ncol=2, legend=c("Spring", "Summer","Autumn", "Winter","2013","2014","2015","2016"), col=c(cbbPalette[3], cbbPalette[2], cbbPalette[4], cbbPalette[5],"black","black","black","black"), pch=c(16,16,16,16,16,17,15,18))
+legend("topleft", legend=c("PERMANOVA, p=0.003"),bty="n", cex=0.8)
+```
+
+
+###COI
+#####COI OTU richness prior to rarefication and occupancy modeling (left) and post rarefication (right)
+```{r,echo=FALSE}
+library(cowplot)
+plot_grid(p2, p6)
+```
+
+#####COI taxa richness post occupancy modeling on genus (left) and family (right)
+```{r,echo=FALSE}
+library(cowplot)
+plot_grid(glom_COI_p1,fam_glom_COI_p1)
+```
+
+###12S
+#####12S OTU richness prior to rarefication and occupancy modeling (left) and post rarefication (right)
+```{r,echo=FALSE}
+#library(cowplot)
+#plot_grid(p3, p7)
+```
+
+#####12S taxa richness post occupancy modeling on genus (left) and family (right)
+```{r,echo=FALSE}
+#library(cowplot)
+#plot_grid(glom_12S_p1,fam_glom_12S_p1)
+```
+

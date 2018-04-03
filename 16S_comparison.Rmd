@@ -1,0 +1,264 @@
+---
+title: "16S Florida Keys and Monterey Bay"
+author: "Anni Djurhuus"
+#date: "27 March 2018"
+output:
+  html_document: default
+  pdf_document: default
+  self contained: no
+---
+
+```{r setup, include=FALSE}
+#install.packages(c("knitr", "rmarkdown"))
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+```{r read biom file for MB 12S, include=FALSE}
+library(lubridate)
+require(RColorBrewer)
+brewer.pal(9,"Set1")
+display.brewer.all()
+mypalette <- brewer.pal(9,"Set1")
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "red","grey", "grey20")
+#biocLite("phyloseq")
+library(phyloseq)
+require(cowplot)
+library(ggplot2)
+
+#12S
+MB_16S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/16S/data/M2W_16S_MB_json_obs_md.biom")
+####### This section will have to change with decontamination. Now I am DELETING all the blanks ########
+sample_names(MB_16S)
+library(stringr)
+MB_16S_meta <- MB_16S@sam_data
+MB_16S_tax <- MB_16S@tax_table
+MB_16S_otu <- MB_16S@otu_table
+MB_16S_meta2 <- str_split_fixed(as.character(MB_16S_meta$DATE_TIME_GMT),' ', 2)
+colnames(MB_16S_meta2) <- c("YEAR_DATE","TIME")
+MB_16S_meta2b <- str_split_fixed(as.character(MB_16S_meta2[,1]),'-', 3)
+colnames(MB_16S_meta2b) <- c("year","month","day")
+
+new_meta_16S_MB <- sample_data(cbind(MB_16S_meta,MB_16S_meta2, MB_16S_meta2b))
+new_16S_MB <- merge_phyloseq(new_meta_16S_MB,MB_16S_tax, MB_16S_otu)
+new_16S_MB <- prune_taxa(taxa_sums(new_16S_MB) > 0, new_16S_MB)
+new_16S_MB <- subset_samples(new_16S_MB, year %in% c("2015", "2016"))
+new_16S_MB <- subset_samples(new_16S_MB, sample_type %in% c("environmental"))
+sample_names(new_16S_MB)
+new_16S_MB <- prune_taxa(taxa_sums(new_16S_MB) > 0, new_16S_MB)
+
+#season_MB_16S <- c("Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter","Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Autumn","Autumn","Autumn","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter")
+
+#MB_12S = subset_taxa(MB_12S, !Rank6=="Homo")
+new_16S_MB_tax <- tax_table(new_16S_MB)
+new_16S_MB_otu <- otu_table(new_16S_MB, taxa_are_rows=TRUE)
+new_16S_MB_meta <- sample_data(new_16S_MB)
+```
+
+
+```{r read BIOM file for FK 12S, include=FALSE, message=FALSE, warning=FALSE}
+FK_16S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/16S/data/M2W_16S_FK_json_obs_md-2.biom",parseFunction = parse_taxonomy_default)
+sample_names(FK_16S)
+FK_16S <- subset_samples(FK_16S, sample_type == "environmental")
+FK_tax_16S <- tax_table(FK_16S)
+FK_16S_otu <- otu_table(FK_16S, taxa_are_rows=TRUE)
+#FK_16S_otu[FK_16S_otu>0] <-1
+meta_FK_16S <- FK_16S@sam_data
+sample_names(FK_16S)
+
+date_16S <- c("2016-09-20","2016-05-10","2015-11-17","2016-09-20","2016-03-15","2015-11-17","2016-09-20","2016-03-15","2015-09-22","2016-07-26","2016-03-15","2015-09-22","2016-11-15","2016-07-26","2016-01-05","2015-09-22", "2016-05-10", "2016-11-15", "2016-07-26", "2015-06-02", "2015-11-17", "2016-11-15", "2016-05-10", "2015-04-14", "2015-04-14")
+          
+season_FK_16S <- c("Autumn","Summer","Winter","Autumn","Spring","Winter","Autumn","Spring","Autumn","Summer","Spring","Autumn","Winter","Summer","Winter","Autumn","Summer","Winter","Summer","Summer","Winter","Winter","Summer","Spring","Spring")
+metadata_16S_FK <- sample_data(cbind(meta_FK_16S, date_16S, season_FK_16S))
+m2w_16S_FK <- merge_phyloseq(metadata_16S_FK,FK_16S_otu,FK_tax_16S)
+m2w_16S_FK <- subset_samples(m2w_16S_FK, sample_names(m2w_16S_FK) != "WS0415b")
+#sample_names(m2w_16S_FK)
+m2w_16S_FK <- prune_taxa(taxa_sums(m2w_16S_FK) > 0, m2w_16S_FK)
+```
+
+####12S results from Florida Keys and Monterey Bay
+######The plots below are made on the richness based on raw reads from the 12S sequencing from both FKNMS and MBNMS at station C1 and Western Sambo, respectively. 
+```{r Plot raw richness, echo=FALSE, message=FALSE, warning=FALSE}
+#plots of richness post rarefaction
+#install.packages("cowplot")
+p1_MB_16S <- plot_richness(new_16S_MB,measures = "Observed",x="YEAR_DATE",title="16S MB",color="locus") + theme(axis.title.x=element_blank())
+p1_MB_16S <- p1_MB_16S + geom_boxplot(outlier.color = NA) + ylim(0,6400)
+p1_MB_16S <- p1_MB_16S + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#56B4E9")
+
+p1_FK_16S <- plot_richness(m2w_16S_FK,measures = "Observed",color="locus",x="date_16S",title="16S FK") + theme(axis.title.x=element_blank())
+p1_FK_16S <- p1_FK_16S + geom_boxplot(outlier.color = NA) + ylim(0,6200)
+p1_FK_16S <- p1_FK_16S + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#D55E00")
+
+library(cowplot)
+plot_grid(p1_MB_16S, p1_FK_16S)
+```
+
+
+```{r rarefy sequences, message=FALSE, warning=FALSE, include=FALSE}
+colSums(new_16S_MB_otu)
+MB_rare_16S = rarefy_even_depth(new_16S_MB)
+colSums(FK_16S_otu)
+FK_rare_16S = rarefy_even_depth(m2w_16S_FK)
+```
+
+######The same richness plots as above based on rarefied samples. FKNMS was rarefied to 44910 sequences and MBNMS was rarefied to 117655 sequences per sample.
+```{r rarefied richness plots, echo=FALSE, message=FALSE, warning=FALSE}
+#plots of richness post rarefaction
+#install.packages("cowplot")
+p2_MB_16S <- plot_richness(MB_rare_16S,x="YEAR_DATE",title="Rarefied 16S",measures = "Observed",color="locus") + theme(axis.title.x=element_blank())
+p2_MB_16S <- p2_MB_16S + geom_boxplot(outlier.color = NA) + ylim(0,3500)
+p2_MB_16S <- p2_MB_16S + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#56B4E9")
+
+p2_FK_16S <- plot_richness(FK_rare_16S,x="date_16S",title="Rarefied 16S",measures = "Observed",color="locus") + theme(axis.title.x=element_blank())
+p2_FK_16S <- p2_FK_16S + geom_boxplot(outlier.color = NA) + ylim(0,3500)
+p2_FK_16S <- p2_FK_16S + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#D55E00")
+
+plot_grid(p2_MB_16S, p2_FK_16S)
+```
+
+######The same richness plots as above agglomerated by genus.
+
+```{r 12S MBNMS genus agglomeration, echo=FALSE, message=FALSE, warning=FALSE}
+genus_glom_MB_16S = tax_glom(new_16S_MB, "Rank6")
+genus_16S_MB <- plot_richness(genus_glom_MB_16S,x="YEAR_DATE",title="Genus 16S",measures = "Observed",color="locus") + theme(axis.title.x=element_blank())
+genus_16S_MB <- genus_16S_MB + geom_boxplot(outlier.color = NA) + ylim(0,150)
+genus_16S_MB <- genus_16S_MB + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#56B4E9")
+```
+
+```{r 12S FKNMS genus agglomeration, echo=FALSE, message=FALSE, warning=FALSE}
+genus_glom_16S_FK = tax_glom(m2w_16S_FK, "Rank6")
+genus_16S_FK <- plot_richness(genus_glom_16S_FK,x="date_16S",title="Genus 16S",measures = "Observed",color="locus") + theme(axis.title.x=element_blank())
+genus_16S_FK <- genus_16S_FK + geom_boxplot(outlier.color = NA) + ylim(0,150)
+genus_16S_FK <- genus_16S_FK + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#D55E00")
+
+plot_grid(genus_16S_MB, genus_16S_FK)
+```
+
+######Clustering based on bray-curtis distances between samples. All samples are agglomerated based on genus and triplicates are merged.
+
+```{r clustering, echo=FALSE, message=FALSE, warning=FALSE}
+library("magrittr")
+library("phyloseq")
+library("ggplot2")
+library("reshape2")
+library(GUniFrac)
+library(RColorBrewer)
+
+########## MBNMS clustering 
+merged_MB_16S = merge_samples(genus_glom_MB_16S, "YEAR_DATE")
+otu_table_16S_MB <- merged_MB_16S@otu_table
+otu_table_16S_MB <- as.data.frame(otu_table_16S_MB)
+agglom_meta_16S_MB <- merged_MB_16S@sam_data
+agglom_meta_16S_MB$date <- row.names(agglom_meta_16S_MB)
+otu_meta_16S_MB_aglom <- cbind(agglom_meta_16S_MB,otu_table_16S_MB)
+
+dist_16S_MB=vegdist(otu_meta_16S_MB_aglom[,c(98:ncol(otu_meta_16S_MB_aglom))], method="bray")
+clust.res_16S_MB=hclust(dist_16S_MB, method="average")
+
+###### FKNMS clustering 
+merged_FK_16s = merge_samples(genus_glom_16S_FK, "date_16S")
+otu_table_16S_FK <- as.data.frame(merged_FK_16s@otu_table)
+agglom_meta_16S_FK <- merged_FK_16s@sam_data
+agglom_meta_16S_FK$date <- row.names(agglom_meta_16S_FK)
+otu_meta_16S_FK_aglom <- cbind(agglom_meta_16S_FK,otu_table_16S_FK)
+
+dist_16S_FK=vegdist(otu_meta_16S_FK_aglom[,c(99:ncol(otu_meta_16S_FK_aglom))], method="bray")
+clust.res_16S_FK=hclust(dist_16S_FK, method="average")
+
+par(mfrow=c(1,2))
+plot(clust.res_16S_MB, xlab="", sub="",labels=otu_meta_16S_MB_aglom$date,main="MBNMS", hang=-1, cex=0.7)
+plot(clust.res_16S_FK, xlab="", sub="",labels=otu_meta_16S_FK_aglom$date,hang=-1, cex=0.7, main="FKNMS")
+```
+
+######Heatmaps for MBNMS and FKNMS. All samples are agglomerated based on genus and triplicates are merged. 
+
+```{r heatmaps,echo=FALSE, message=FALSE, warning=FALSE}
+
+######################################## heatmap  #######################################
+merged_MB_16S = tax_glom(merged_MB_16S, "Rank6")
+merged_MB_16S = subset_taxa(merged_MB_16S, !Rank6=="g_")
+merged_genus_MB_otu_16S <- t(as.data.frame(merged_MB_16S@otu_table))
+data_frame_TAX_merg_genus_MB_16S <- as.data.frame(merged_MB_16S@tax_table)
+rownames(merged_genus_MB_otu_16S) <- data_frame_TAX_merg_genus_MB_16S$Rank6
+
+library(superheat)
+merged_genus_MB_otu_16S[merged_genus_MB_otu_16S == 0] <- NA
+merged_genus_MB_meta_16S <- merged_MB_16S@sam_data
+superheat(merged_genus_MB_otu_16S,heat.col.scheme = "blue",left.label.text.size = 5,yt = merged_genus_MB_meta_16S$TMP_C, yt.axis.name = "Temperature",yt.point.size = 2,bottom.label.text.size=2, row.title = "",yt.axis.size = 10,bottom.label.text.angle = 90,yt.axis.name.size = 10, yt.obs.col = rep("grey", nrow(merged_genus_MB_meta_16S)))
+
+merged_FK_16s = subset_taxa(merged_FK_16s, !Rank6=="g_")
+merged_genus_FK_otu_16S <- t(as.data.frame(merged_FK_16s@otu_table))
+data_frame_TAX_merg_genus_FK_16S <- as.data.frame(merged_FK_16s@tax_table)
+rownames(merged_genus_FK_otu_16S) <- data_frame_TAX_merg_genus_FK_16S$Rank6
+
+merged_genus_FK_otu_16S[merged_genus_FK_otu_16S == 0] <- NA
+superheat(merged_genus_FK_otu_16S,heat.col.scheme = "red",bottom.label.text.size=2, row.title = "",left.label.text.size = 2,bottom.label.text.angle = 90)
+
+```
+
+#####Heatmaps on phyla level.
+```{r heatmap on phylum}
+library(superheat)
+merged_MB_16S_phyla = tax_glom(merged_MB_16S, "Rank2")
+merged_phyla_MB_otu_16S <- t(as.data.frame(merged_MB_16S_phyla@otu_table))
+merged_phyla_MB_otu_16S[merged_phyla_MB_otu_16S == 0] <- NA
+data_frame_TAX_merg_phyla_MB_16S <- as.data.frame(merged_MB_16S_phyla@tax_table)
+rownames(merged_phyla_MB_otu_16S) <- data_frame_TAX_merg_phyla_MB_16S$Rank2
+
+superheat(merged_phyla_MB_otu_16S,heat.col.scheme = "blue",bottom.label.text.size=2, row.title = "",left.label.text.size = 2,bottom.label.text.angle = 90)
+
+merged_FK_16S_phyla = tax_glom(merged_FK_16s, "Rank2")
+merged_phyla_FK_otu_16S <- t(as.data.frame(merged_FK_16S_phyla@otu_table))
+merged_phyla_FK_otu_16S[merged_phyla_FK_otu_16S == 0] <- NA
+data_frame_TAX_merg_phyla_FK_16S <- as.data.frame(merged_FK_16S_phyla@tax_table)
+rownames(merged_phyla_FK_otu_16S) <- data_frame_TAX_merg_phyla_FK_16S$Rank2
+
+superheat(merged_phyla_FK_otu_16S,heat.col.scheme = "red",bottom.label.text.size=2, row.title = "",left.label.text.size = 2,bottom.label.text.angle = 90)
+```
+
+#####NMDS based on Bray-Curtis distance on Genera present in all samples for MBNMS (left) and FKNMS (right)
+```{r NMDS, echo=FALSE}
+#NMDS
+genus_otus_MB_16S <- as.data.frame(t(genus_glom_MB_16S@otu_table))
+genus_glom_16S_meta <- genus_glom_MB_16S@sam_data
+nmds_16S_MB <- metaMDS(genus_otus_MB_16S, distance="bray", trace = FALSE, trymax=100) 
+xbac_16S_MB <- nmds_16S_MB$points[,1]
+ybac_16S_MB <- nmds_16S_MB$points[,2]
+#vegan::stressplot(nmds_16S_MB)
+
+#FKNMS NMNDS
+#genus_glom_16S_FK = tax_glom(m2w_16S_FK, "Rank6")
+genus_otus_FK_16S <- as.data.frame(t(genus_glom_16S_FK@otu_table))
+genus_glom_16S_meta_FK <- genus_glom_16S_FK@sam_data
+nmds_16S_FK <- metaMDS(genus_otus_FK_16S, distance="bray", trace = FALSE, trymax=100) 
+xbac_16S_FK <- nmds_16S_FK$points[,1]
+ybac_16S_FK <- nmds_16S_FK$points[,2]
+
+#vegan::stressplot(nmds_16S_FK)
+par(mfrow=c(1,2))
+plot(xbac_16S_MB, ybac_16S_MB,xlab="Coordinate 1",ylab="Coordinate 2",main="", col=c(cbbPalette[genus_glom_16S_meta$YEAR_DATE]), cex=1.7, pch=19)
+text(nmds_16S_MB$points[,1], nmds_16S_MB$points[,2],labels=genus_glom_16S_meta$YEAR_DATE,pos=3,cex=0.5) 
+
+plot(xbac_16S_FK, ybac_16S_FK,  xlab="Coordinate 1",ylab="Coordinate 2",main="", col=c(cbbPalette[genus_glom_16S_meta_FK$date_16S]), cex=1.7, pch=19)
+text(nmds_16S_FK$points[,1], nmds_16S_FK$points[,2],labels=genus_glom_16S_meta_FK$date_16S,pos=3,cex=0.5) 
+```
+
+
+```{r, eval=FALSE, include=FALSE}
+fam_glom_MB_16S = tax_glom(new_16S_MB, "Rank5")
+fam_glom_16S_FK = tax_glom(m2w_16S_FK, "Rank5")
+
+MB_FK_16S_genus <- merge_phyloseq(fam_glom_16S_FK,fam_glom_MB_16S)
+MB_FK_16S_genus_otu <- as.data.frame(t(MB_FK_16S_genus@otu_table))
+MB_FK_16S_genus_meta <- MB_FK_16S_genus@sam_data
+
+nmds_16S_FK_MB <- metaMDS(MB_FK_16S_genus_otu, distance="bray", trace = FALSE, trymax=100) 
+vegan::stressplot(nmds_16S_FK_MB)
+xbac_16S_FK_MB <- nmds_16S_FK_MB$points[,1]
+ybac_16S_FK_MB <- nmds_16S_FK_MB$points[,2]
+
+plot(xbac_16S_FK_MB, ybac_16S_FK_MB,xlab="Coordinate 1",ylab="Coordinate 2",main="", cex=1.7, pch=19)
+text(nmds_16S_FK_MB$points[,1], nmds_16S_FK_MB$points[,2],labels=MB_FK_16S_genus_meta$STATION_NUMBER,pos=3,cex=0.5) 
+text(nmds_16S_FK_MB$points[,1], nmds_16S_FK_MB$points[,2],labels=MB_FK_16S_genus_meta$season_FK_16S,pos=3,cex=0.5) 
+
+```

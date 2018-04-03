@@ -1,0 +1,264 @@
+---
+title: "12S Florida Keys and Monterey Bay"
+author: "Anni Djurhuus"
+#date: "14 March 2018"
+output:
+  html_document: default
+  pdf_document: default
+  self contained: no
+---
+
+```{r setup, include=FALSE}
+#install.packages(c("knitr", "rmarkdown"))
+
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+```{r read biom file for MB 12S, include=FALSE}
+library(lubridate)
+require(RColorBrewer)
+brewer.pal(9,"Set1")
+display.brewer.all()
+mypalette <- brewer.pal(9,"Set1")
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "red","grey", "grey20")
+FK_MB_col <- c("#E69F00","#56B4E9")
+#biocLite("phyloseq")
+library(phyloseq)
+require(cowplot)
+library(ggplot2)
+
+#12S
+m2w_12S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/MB_12S_NT_json_obs_md2.biom")
+####### This section will have to change with decontamination. Now I am DELETING all the blanks ########
+sample_names(m2w_12S)
+m2w_12S <- subset_samples(m2w_12S, sample_names(m2w_12S) != "ArtComm_HS_1" & sample_names(m2w_12S) != "ArtComm_HS_2" & sample_names(m2w_12S) !="ArtComm_HS_3" & sample_names(m2w_12S) !="CB_CANON160925_1" & sample_names(m2w_12S) !="CB_CANON160925_2" & sample_names(m2w_12S) !="CB_CANON160925_3" & sample_names(m2w_12S) !="EB_11162016" & sample_names(m2w_12S) !="EB_11212016" & sample_names(m2w_12S) !="EB_12282016" & sample_names(m2w_12S) !="NTC_pool_1" & sample_names(m2w_12S) !="NTC_pool_2" & sample_names(m2w_12S) !="NTC_pool_3" & sample_names(m2w_12S) !="JD10706c1_0m_1" & sample_names(m2w_12S) !="JD10706c1_0m_2" & sample_names(m2w_12S) !="JD10706c1_0m_3" & sample_names(m2w_12S) !="JD15806c1_0m_1" & sample_names(m2w_12S) !="JD15806c1_0m_2" & sample_names(m2w_12S) !="JD15806c1_0m_3" & sample_names(m2w_12S) !="JD27006c1_0m_1" & sample_names(m2w_12S) !="JD27006c1_0m_2" & sample_names(m2w_12S) !="JD27006c1_0m_3")
+otu_12S <- otu_table(m2w_12S, taxa_are_rows=TRUE)
+metadata_12S <- m2w_12S@sam_data
+m2w_12S_tax <- tax_table(m2w_12S)
+library(stringr)
+metadata_12S2 <- str_split_fixed(as.character(metadata_12S$DATE_TIME_GMT),' ', 2)
+colnames(metadata_12S2) <- c("YEAR_DATE","TIME")
+metadata_12S2b <- str_split_fixed(as.character(metadata_12S2[,1]),'-', 3)
+colnames(metadata_12S2b) <- c("year","month","day")
+season <- c("Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter","Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Autumn","Autumn","Autumn","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter","Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter","Winter","Winter")
+metadata_12S <- sample_data(cbind(season,metadata_12S,metadata_12S2, metadata_12S2b))
+m2w_12S <- merge_phyloseq(metadata_12S,otu_12S, m2w_12S_tax)
+m2w_12S <- prune_taxa(taxa_sums(m2w_12S) > 0, m2w_12S)
+MB_12S <- subset_samples(m2w_12S, year %in% c("2015", "2016"))
+#MB_12S = subset_taxa(MB_12S, Rank1=="Eukaryota")
+#MB_12S = subset_taxa(MB_12S, !Rank6=="Homo")
+m2w_MB_12S_tax <- tax_table(m2w_12S)
+MB_12S_otu <- otu_table(MB_12S, taxa_are_rows=TRUE)
+MB_12S_meta <- sample_data(MB_12S)
+```
+
+
+```{r read BIOM file for FK 12S, include=FALSE, message=FALSE, warning=FALSE}
+m2w_12S_FK <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/FK_12S_NT_json_obs_md.biom")
+sample_names(m2w_12S_FK)
+m2w_12S_FK <- subset_samples(m2w_12S_FK, sample_type == "environmental")
+sample_names(m2w_12S_FK)
+m2w_12S_FK <- subset_samples(m2w_12S_FK, sample_names(m2w_12S_FK) !="406_408" & sample_names(m2w_12S_FK) !="418_420" & sample_names(m2w_12S_FK) !="412_414" & sample_names(m2w_12S_FK) !="MBON325" & sample_names(m2w_12S_FK) !="MBON326" & sample_names(m2w_12S_FK) !="MBON327" & sample_names(m2w_12S_FK) !="MBON295" & sample_names(m2w_12S_FK) !="MBON296" & sample_names(m2w_12S_FK) !="MBON297" & sample_names(m2w_12S_FK) !="MBON331" & sample_names(m2w_12S_FK) !="MBON332" & sample_names(m2w_12S_FK) !="MBON333" & sample_names(m2w_12S_FK) !="MBON307" & sample_names(m2w_12S_FK) !="MBON308" & sample_names(m2w_12S_FK) !="MBON309" & sample_names(m2w_12S_FK) !="MBON298" & sample_names(m2w_12S_FK) !="MBON299" & sample_names(m2w_12S_FK) !="MBON304" & sample_names(m2w_12S_FK) !="MBON305" & sample_names(m2w_12S_FK) !="MBON306" & sample_names(m2w_12S_FK) !="MBON301" & sample_names(m2w_12S_FK) !="MBON329" & sample_names(m2w_12S_FK) !="MBON211" & sample_names(m2w_12S_FK) !="MBON302" & sample_names(m2w_12S_FK) !="MBON303" & sample_names(m2w_12S_FK) !="MBON334" & sample_names(m2w_12S_FK) !="MBON335" & sample_names(m2w_12S_FK) !="ArtComm_HS_2" & sample_names(m2w_12S_FK) !="ArtComm_HS_3" & sample_names(m2w_12S_FK) !="NTC_pool_1" & sample_names(m2w_12S_FK) !="NTC_pool_2" & sample_names(m2w_12S_FK) !="NTC_pool_3" & sample_names(m2w_12S_FK) !="ArtComm_HS_1" & sample_names(m2w_12S_FK) !="MBON296_1" & sample_names(m2w_12S_FK) !="MBON296_2" & sample_names(m2w_12S_FK) !="MBON296_3" & sample_names(m2w_12S_FK) !="MBON298_1" & sample_names(m2w_12S_FK) !="MBON298_2" & sample_names(m2w_12S_FK) !="MBON298_3" & sample_names(m2w_12S_FK) !="MBON156" & sample_names(m2w_12S_FK) !="MBON279" & sample_names(m2w_12S_FK) !="MBON288" & sample_names(m2w_12S_FK) !="MBON184" & sample_names(m2w_12S_FK) !="MBON300" & sample_names(m2w_12S_FK) !="MBON240")
+m2w_12S_FK_tax <- tax_table(m2w_12S_FK)
+
+date <- c("2015-04-14","2015-04-14","2015-06-02","2015-06-02","2015-06-02","2015-09-22","2015-09-22","2015-09-22","2015-11-17","2015-11-17","2015-11-17","2016-01-05","2016-01-05","2015-01-05","2016-03-15","2016-03-15","2016-05-10","2016-05-10","2016-05-10","2016-07-26","2016-07-26","2016-07-26","2016-09-20","2016-09-20","2016-11-15","2016-11-15","2016-11-15")
+#month_year_FK <- as.data.frame(paste(metadata_12S_FK$year,season_month,metadata_12S_FK$day))
+#colnames(month_year_FK) <- c("DATE_YEAR_MONTH")
+#month_year_FK$DATE_YEAR_MONTH <- ymd(month_year_FK$DATE_YEAR_MONTH)
+season_FK <- c("Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Autumn","Autumn","Autumn","Winter","Winter","Winter","Spring","Spring","Spring","Spring","Spring","Summer","Summer","Summer","Autumn","Autumn","Autumn","Autumn","Autumn")
+metadata_12S_FK <- m2w_12S_FK@sam_data
+metadata_12S_FK <- sample_data(cbind(metadata_12S_FK, date, season_FK))
+otu_12S_FK <- otu_table(m2w_12S_FK, taxa_are_rows=TRUE)
+#otu_12S_FK[otu_12S_FK>0] <-1
+#d_FK <- as.data.frame(otu_12S_FK)
+m2w_12S_FK <- merge_phyloseq(metadata_12S_FK,otu_12S_FK,m2w_12S_FK_tax)
+#m2w_12S_FK <- prune_taxa(taxa_sums(m2w_12S_FK) > 0, m2w_12S_FK)
+#m2w_12S_FK = subset_taxa(m2w_12S_FK, !Rank5=="Hominidae")
+#m2w_12S_FK = subset_taxa(m2w_12S_FK, Rank1=="Eukaryota")
+sample_names(m2w_12S_FK)
+```
+
+####12S results from Florida Keys and Monterey Bay
+######The plots below are made on the richness based on raw reads from the 12S sequencing from both FKNMS and MBNMS at station C1 and Western Sambo, respectively. 
+```{r Plot raw richness, echo=FALSE, message=FALSE, warning=FALSE}
+#plots of richness post rarefaction
+#install.packages("cowplot")
+p1_MB <- plot_richness(MB_12S,x="YEAR_DATE",title="12S",measures = "Observed",color="library") + theme(axis.title.x=element_blank())
+p1_MB <- p1_MB + geom_boxplot(outlier.color = NA) + ylim(0,450)
+p1_MB <- p1_MB + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#56B4E9")
+
+p1_FK <- plot_richness(m2w_12S_FK,x="date",title="12S",measures = "Observed",color="library") + theme(axis.title.x=element_blank())
+p1_FK <- p1_FK + geom_boxplot(outlier.color = NA) + ylim(0,450)
+p1_FK <- p1_FK + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#E69F00")
+
+library(cowplot)
+plot_grid(p1_MB, p1_FK)
+```
+
+
+```{r rarefy sequences, echo=FALSE, include=FALSE, message=FALSE, warning=FALSE}
+colSums(MB_12S_otu)
+MB_rare_12S = rarefy_even_depth(MB_12S)
+colSums(otu_12S_FK)
+FK_rare_12S = rarefy_even_depth(m2w_12S_FK)
+```
+
+######The same richness plots as above based on rarefied samples. FKNMS was rarefied to 44910 sequences and MBNMS was rarefied to 117655 sequences per sample.
+```{r rarefied richness plots, echo=FALSE, message=FALSE, warning=FALSE}
+#plots of richness post rarefaction
+#install.packages("cowplot")
+p2_MB <- plot_richness(MB_rare_12S,x="YEAR_DATE",title="Rarefied 12S",measures = "Observed",color="library") + theme(axis.title.x=element_blank())
+p2_MB <- p2_MB + geom_boxplot(outlier.color = NA) + ylim(0,400)
+p2_MB <- p2_MB + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#56B4E9")
+
+p2_FK <- plot_richness(FK_rare_12S,x="date",title="Rarefied 12S",measures = "Observed",color="library") + theme(axis.title.x=element_blank())
+p2_FK <- p2_FK + geom_boxplot(outlier.color = NA) + ylim(0,400)
+p2_FK <- p2_FK + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#E69F00")
+
+plot_grid(p2_MB, p2_FK)
+```
+
+######The same richness plots as above agglomerated by genus.
+
+```{r 12S MBNMS genus agglomeration, echo=FALSE, message=FALSE, warning=FALSE}
+genus_glom_12S = tax_glom(MB_12S, "Rank6")
+#family_glom_12S = tax_glom(MB_12S, "Rank5")
+genus_12S_MB <- plot_richness(genus_glom_12S,x="YEAR_DATE",title="Genus 12S",measures = "Observed",color="library") + theme(axis.title.x=element_blank())
+genus_12S_MB <- genus_12S_MB + geom_boxplot(outlier.color = NA) + ylim(0,30)
+genus_12S_MB <- genus_12S_MB + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#56B4E9")
+```
+
+```{r 12S FKNMS genus agglomeration, echo=FALSE, message=FALSE, warning=FALSE}
+genus_glom_12S_FK = tax_glom(m2w_12S_FK, "Rank6")
+#family_glom_12S_FK = tax_glom(m2w_12S_FK, "Rank5")
+genus_12S_FK <- plot_richness(genus_glom_12S_FK,x="date",title="Genus 12S",measures = "Observed",color="library") + theme(axis.title.x=element_blank())
+genus_12S_FK <- genus_12S_FK + geom_boxplot(outlier.color = NA) + ylim(0,30)
+genus_12S_FK <- genus_12S_FK + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#E69F00")
+
+plot_grid(genus_12S_MB, genus_12S_FK)
+```
+
+######Clustering based on bray-curtis distances between samples. All samples are agglomerated based on genus and triplicates are merged.
+
+```{r clustering, echo=FALSE, message=FALSE, warning=FALSE}
+library("magrittr")
+library("phyloseq")
+library("ggplot2")
+library("reshape2")
+library(GUniFrac)
+library(RColorBrewer)
+
+########## MBNMS clustering 
+genus_glom_12S <- prune_taxa(taxa_sums(genus_glom_12S) > 0, genus_glom_12S)
+merged_MB = merge_samples(genus_glom_12S, "YEAR_DATE")
+otu_table_12S_MB <- as.data.frame(merged_MB@otu_table)
+agglom_meta_12S_MB <- merged_MB@sam_data
+agglom_meta_12S_MB$date <- row.names(agglom_meta_12S_MB)
+otu_meta_12S_MB_aglom <- cbind(agglom_meta_12S_MB,otu_table_12S_MB)
+
+dist_12S_MB=vegdist(otu_meta_12S_MB_aglom[,c(96:ncol(otu_meta_12S_MB_aglom))], method="bray")
+clust.res_12S_MB=hclust(dist_12S_MB, method="average")
+
+###### FKNMS clustering 
+genus_glom_12S_FK <- prune_taxa(taxa_sums(genus_glom_12S_FK) > 0, genus_glom_12S_FK)
+merged_FK = merge_samples(genus_glom_12S_FK, "date")
+otu_table_12S_FK <- as.data.frame(merged_FK@otu_table)
+agglom_meta_12S_FK <- merged_FK@sam_data
+agglom_meta_12S_FK$date <- row.names(agglom_meta_12S_FK)
+otu_meta_12S_FK_aglom <- cbind(agglom_meta_12S_FK,otu_table_12S_FK)
+
+dist_12S_FK=vegdist(otu_meta_12S_FK_aglom[,c(64:ncol(otu_meta_12S_FK_aglom))], method="bray")
+clust.res_12S_FK=hclust(dist_12S_FK, method="average")
+
+par(mfrow=c(1,2))
+plot(clust.res_12S_MB, xlab="", sub="",labels=otu_meta_12S_MB_aglom$date,main="MBNMS", hang=-1, cex=0.7)
+plot(clust.res_12S_FK, xlab="", sub="",labels=otu_meta_12S_FK_aglom$date,hang=-1, cex=0.7, main="FKNMS")
+
+```
+
+######Heatmaps for MBNMS and FKNMS. All samples are agglomerated based on genus and triplicates are merged. 
+
+```{r heatmaps,echo=FALSE, message=FALSE, warning=FALSE}
+
+######################################## heatmap  #######################################
+
+merged_genus_MB_otu <- t(as.data.frame(merged_MB@otu_table))
+data_frame_TAX_merg_genus_MB <- as.data.frame(merged_MB@tax_table)
+rownames(merged_genus_MB_otu) <- data_frame_TAX_merg_genus_MB$Rank6
+
+library(superheat)
+merged_genus_MB_otu[merged_genus_MB_otu == 0] <- NA
+merged_genus_MB_meta <- merged_MB@sam_data
+superheat(merged_genus_MB_otu,heat.col.scheme = "blue",left.label.text.size = 1,yt = merged_genus_MB_meta$TMP_C, yt.axis.name = "Temperature",yt.point.size = 2,bottom.label.text.size=2, row.title = "",yt.axis.size = 10,bottom.label.text.angle = 90,yt.axis.name.size = 10, yt.obs.col = rep("grey", nrow(merged_genus_MB_meta)))
+
+merged_genus_FK_otu <- t(as.data.frame(merged_FK@otu_table))
+data_frame_TAX_merg_genus_FK <- as.data.frame(merged_FK@tax_table)
+rownames(merged_genus_FK_otu) <- data_frame_TAX_merg_genus_FK$Rank6
+merged_genus_FK_otu[merged_genus_FK_otu == 0] <- NA
+superheat(merged_genus_FK_otu,heat.col.scheme = "red",bottom.label.text.size=1, row.title = "",left.label.text.size = 2,bottom.label.text.angle = 90)
+
+```
+
+######Heatmaps on order level.
+
+```{r}
+library(superheat)
+merged_MB_12S_phyla = tax_glom(merged_MB, "Rank4")
+merged_phyla_MB_otu_12S <- t(as.data.frame(merged_MB_12S_phyla@otu_table))
+merged_phyla_MB_otu_12S[merged_phyla_MB_otu_12S == 0] <- NA
+data_frame_TAX_merg_phyla_MB_12S <- as.data.frame(merged_MB_12S_phyla@tax_table)
+rownames(merged_phyla_MB_otu_12S) <- data_frame_TAX_merg_phyla_MB_12S$Rank4
+
+superheat(merged_phyla_MB_otu_12S,heat.col.scheme = "blue",yt = merged_genus_MB_meta$TMP_C, yt.axis.name = "Temperature",yt.point.size = 2,yt.obs.col = rep("grey", nrow(merged_genus_MB_meta)),bottom.label.text.size=2, row.title = "",left.label.text.size = 2,bottom.label.text.angle = 90)
+
+merged_FK_12S_phyla = tax_glom(merged_FK, "Rank4")
+merged_phyla_FK_otu_12S <- t(as.data.frame(merged_FK_12S_phyla@otu_table))
+merged_phyla_FK_otu_12S[merged_phyla_FK_otu_12S == 0] <- NA
+data_frame_TAX_merg_phyla_FK_12S <- as.data.frame(merged_FK_12S_phyla@tax_table)
+rownames(merged_phyla_FK_otu_12S) <- data_frame_TAX_merg_phyla_FK_12S$Rank4
+
+superheat(merged_phyla_FK_otu_12S,heat.col.scheme = "red",bottom.label.text.size=2, row.title = "",left.label.text.size = 2,bottom.label.text.angle = 90)
+```
+
+#####NMDS based on Bray-Curtis distance on Genera present in all samples for MBNMS (left) and FKNMS (right)
+```{r NMDS, echo=FALSE}
+#NMDS
+genus_otus_MB <- as.data.frame(t(genus_glom_12S@otu_table))
+genus_glom_12S_meta <- genus_glom_12S@sam_data
+nmds_12S_MB <- metaMDS(genus_otus_MB, distance="bray", trace = FALSE, trymax=100) 
+xbac_12S_MB <- nmds_12S_MB$points[,1]
+ybac_12S_MB <- nmds_12S_MB$points[,2]
+
+#FKNMS NMNDS
+genus_otus_FK <- as.data.frame(t(genus_glom_12S_FK@otu_table))
+genus_glom_12S_meta_FK <- genus_glom_12S_FK@sam_data
+nmds_12S_FK <- metaMDS(genus_otus_FK, distance="bray", trace = FALSE, trymax=100) 
+xbac_12S_FK <- nmds_12S_FK$points[,1]
+ybac_12S_FK <- nmds_12S_FK$points[,2]
+
+par(mfrow=c(1,2))
+plot(xbac_12S_MB, ybac_12S_MB, xlim=c(-1.3,1.4),ylim=c(-0.8,1.2),xlab="Coordinate 1",ylab="Coordinate 2",main="", col=c(cbbPalette[genus_glom_12S_meta$YEAR_DATE]), cex=1.7, pch=19)
+text(nmds_12S_MB$points[,1], nmds_12S_MB$points[,2],labels=genus_glom_12S_meta$YEAR_DATE,pos=3,cex=0.5) 
+#beta_18S = betadiver(otu_meta_18S[,c(44:ncol(otu_meta_18S))], "z")
+#adonis(beta_18S ~ type_sample, data= otu_meta_18S, method="bray", perm=500) #make 
+plot(xbac_12S_FK, ybac_12S_FK,  xlim=c(-1.2,1.2),ylim=c(-0.4,0.6),xlab="Coordinate 1",ylab="Coordinate 2",main="", col=c(cbbPalette[genus_glom_12S_meta_FK$date]), cex=1.7, pch=19)
+text(nmds_12S_FK$points[,1], nmds_12S_FK$points[,2],labels=genus_glom_12S_meta_FK$date,pos=3,cex=0.5) 
+```
+
+#NMDS for both locations agglomerated by genus prior to making NMDS 
+```{r}
+MB_FK_12S_genus <- merge_phyloseq(genus_glom_12S_FK,genus_glom_12S)
+MB_FK_12S_genus_otu <- as.data.frame(t(MB_FK_12S_genus@otu_table))
+MB_FK_12S_genus_meta <- MB_FK_12S_genus@sam_data
+
+nmds_12S_FK_MB <- metaMDS(MB_FK_12S_genus_otu, distance="bray", trace = FALSE, trymax=100) 
+xbac_12S_FK_MB <- nmds_12S_FK_MB$points[,1]
+ybac_12S_FK_MB <- nmds_12S_FK_MB$points[,2]
+
+plot(xbac_12S_FK_MB, ybac_12S_FK_MB,xlab="Coordinate 1",ylab="Coordinate 2",main="", col=c(FK_MB_col[as.factor(MB_FK_12S_genus_meta$library)]), cex=1.7, pch=19)
+text(nmds_12S_FK_MB$points[,1], nmds_12S_FK_MB$points[,2],labels=MB_FK_12S_genus_meta$season,pos=3,cex=0.5) 
+text(nmds_12S_FK_MB$points[,1], nmds_12S_FK_MB$points[,2],labels=MB_FK_12S_genus_meta$season_FK,pos=3,cex=0.5) 
+
+```
+

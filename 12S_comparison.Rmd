@@ -30,7 +30,7 @@ library(ggplot2)
 
 #12S
 m2w_12S <- import_biom("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/12S/MB_12S_NT_json_obs_md2.biom")
-####### This section will have to change with decontamination. Now I am DELETING all the blanks ########
+####### This section will have to change with decontamination. Now I am DELETING all the blanks manually########
 sample_names(m2w_12S)
 m2w_12S <- subset_samples(m2w_12S, sample_names(m2w_12S) != "ArtComm_HS_1" & sample_names(m2w_12S) != "ArtComm_HS_2" & sample_names(m2w_12S) !="ArtComm_HS_3" & sample_names(m2w_12S) !="CB_CANON160925_1" & sample_names(m2w_12S) !="CB_CANON160925_2" & sample_names(m2w_12S) !="CB_CANON160925_3" & sample_names(m2w_12S) !="EB_11162016" & sample_names(m2w_12S) !="EB_11212016" & sample_names(m2w_12S) !="EB_12282016" & sample_names(m2w_12S) !="NTC_pool_1" & sample_names(m2w_12S) !="NTC_pool_2" & sample_names(m2w_12S) !="NTC_pool_3" & sample_names(m2w_12S) !="JD10706c1_0m_1" & sample_names(m2w_12S) !="JD10706c1_0m_2" & sample_names(m2w_12S) !="JD10706c1_0m_3" & sample_names(m2w_12S) !="JD15806c1_0m_1" & sample_names(m2w_12S) !="JD15806c1_0m_2" & sample_names(m2w_12S) !="JD15806c1_0m_3" & sample_names(m2w_12S) !="JD27006c1_0m_1" & sample_names(m2w_12S) !="JD27006c1_0m_2" & sample_names(m2w_12S) !="JD27006c1_0m_3")
 otu_12S <- otu_table(m2w_12S, taxa_are_rows=TRUE)

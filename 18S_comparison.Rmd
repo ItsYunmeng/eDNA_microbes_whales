@@ -41,11 +41,10 @@ new_18S_MB <- merge_phyloseq(new_meta_18S_MB,MB_18S_tax, MB_18S_otu)
 new_18S_MB <- subset_samples(new_18S_MB, year %in% c("2015", "2016"))
 sample_names(new_18S_MB)
 new_18S_MB <- prune_taxa(taxa_sums(new_18S_MB) > 0, new_18S_MB)
-
-
 new_18S_MB_tax <- tax_table(new_18S_MB)
 new_18S_MB_otu <- otu_table(new_18S_MB, taxa_are_rows=TRUE)
 new_18S_MB_meta <- sample_data(new_18S_MB)
+
 merged_MB_18S = merge_samples(new_18S_MB, "YEAR_DATE")
 ```
 
@@ -137,7 +136,7 @@ genus_18S_MB <- genus_18S_MB + geom_point(size=5, alpha=0.4) + scale_color_manua
 ```{r 18S FKNMS genus agglomeration, echo=FALSE, message=FALSE, warning=FALSE}
 genus_glom_18S_FK = tax_glom(m2w_18S_FK, "Rank6")
 genus_18S_FK <- plot_richness(genus_glom_18S_FK,x="DATE_YEAR_MONTH",title="Genus 18S",measures = "Observed",color="locus") + theme(axis.title.x=element_blank())
-genus_18S_FK <- genus_18S_FK + geom_boxplot(outlier.color = NA) + ylim(0,520)
+genus_18S_FK <- genus_18S_FK + geom_boxplot(outlier.color = NA) + ylim(0,600)
 genus_18S_FK <- genus_18S_FK + geom_point(size=5, alpha=0.4) + scale_color_manual(values="#D55E00")
 
 plot_grid(genus_18S_MB, genus_18S_FK)

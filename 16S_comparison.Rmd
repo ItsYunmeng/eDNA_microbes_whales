@@ -67,13 +67,12 @@ meta_FK_16S <- FK_16S@sam_data
 sample_names(FK_16S)
 
 date_16S <- c("2016-09-20","2016-05-10","2015-11-17","2016-09-20","2016-03-15","2015-11-17","2016-09-20","2016-03-15","2015-09-22","2016-07-26","2016-03-15","2015-09-22","2016-11-15","2016-07-26","2016-01-05","2015-09-22", "2016-05-10", "2016-11-15", "2016-07-26", "2015-06-02", "2015-11-17", "2016-11-15", "2016-05-10", "2015-04-14", "2015-04-14")
-          
 season_FK_16S <- c("Autumn","Summer","Winter","Autumn","Spring","Winter","Autumn","Spring","Autumn","Summer","Spring","Autumn","Winter","Summer","Winter","Autumn","Summer","Winter","Summer","Summer","Winter","Winter","Summer","Spring","Spring")
 metadata_16S_FK <- sample_data(cbind(meta_FK_16S, date_16S, season_FK_16S))
 m2w_16S_FK <- merge_phyloseq(metadata_16S_FK,FK_16S_otu,FK_tax_16S)
 m2w_16S_FK <- subset_samples(m2w_16S_FK, sample_names(m2w_16S_FK) != "WS0415b")
-#sample_names(m2w_16S_FK)
 m2w_16S_FK <- prune_taxa(taxa_sums(m2w_16S_FK) > 0, m2w_16S_FK)
+metadata_16S_FK <- sample_data(m2w_16S_FK)
 ```
 
 ####12S results from Florida Keys and Monterey Bay
@@ -221,7 +220,7 @@ superheat(merged_phyla_FK_otu_16S,heat.col.scheme = "red",bottom.label.text.size
 #NMDS
 genus_otus_MB_16S <- as.data.frame(t(genus_glom_MB_16S@otu_table))
 genus_glom_16S_meta <- genus_glom_MB_16S@sam_data
-nmds_16S_MB <- metaMDS(genus_otus_MB_16S, distance="bray", trace = FALSE, trymax=100) 
+nmds_16S_MB <- metaMDS(genus_otus_MB_16S, distance="jaccard", binary=T,trace = FALSE, trymax=100) 
 xbac_16S_MB <- nmds_16S_MB$points[,1]
 ybac_16S_MB <- nmds_16S_MB$points[,2]
 #vegan::stressplot(nmds_16S_MB)
@@ -230,7 +229,7 @@ ybac_16S_MB <- nmds_16S_MB$points[,2]
 #genus_glom_16S_FK = tax_glom(m2w_16S_FK, "Rank6")
 genus_otus_FK_16S <- as.data.frame(t(genus_glom_16S_FK@otu_table))
 genus_glom_16S_meta_FK <- genus_glom_16S_FK@sam_data
-nmds_16S_FK <- metaMDS(genus_otus_FK_16S, distance="bray", trace = FALSE, trymax=100) 
+nmds_16S_FK <- metaMDS(genus_otus_FK_16S, distance="jaccard", binary=T,trace = FALSE, trymax=100) 
 xbac_16S_FK <- nmds_16S_FK$points[,1]
 ybac_16S_FK <- nmds_16S_FK$points[,2]
 

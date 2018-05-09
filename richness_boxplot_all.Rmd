@@ -1,0 +1,172 @@
+---
+title: "Boxplot_all"
+author: "Anni Djurhuus"
+date: "4 April 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = FALSE)
+insertRow <- function(existingDF, newrow, r) {
+  existingDF[seq(r+1,nrow(existingDF)+1),] <- existingDF[seq(r,nrow(existingDF)),]
+  existingDF[r,] <- newrow
+  existingDF
+}
+```
+
+
+```{r, include=FALSE}
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","red","grey", "grey20")
+
+add.alpha <- function(col, alpha=1){
+  if(missing(col))
+    stop("Please provide a vector of colours.")
+  apply(sapply(col, col2rgb)/255, 2, 
+                     function(x) 
+                       rgb(x[1], x[2], x[3], alpha=alpha))  
+}
+cbbPalette_alpha <- add.alpha(cbbPalette, alpha=0.5)
+```
+
+
+```{r, echo=FALSE}
+library(phyloseq)
+library(RColorBrewer)
+library(DBI)
+library(lubridate)
+mypalette <- brewer.pal(9,"Set1")
+
+########### MBNMS ########
+richness_18S_MB <- setNames(cbind(estimate_richness(genus_glom_MB_18S,measures="Observed"),new_18S_MB_meta$YEAR_DATE, new_18S_MB_meta$locus),c("richness","YEAR_DATE", "locus"))
+richness_16S_MB <- setNames(cbind(estimate_richness(genus_glom_MB_16S,measures="Observed"),new_16S_MB_meta$YEAR_DATE, new_16S_MB_meta$locus), c("richness","YEAR_DATE", "locus"))
+richness_12S_MB <- as.data.frame(setNames(cbind(estimate_richness(genus_glom_12S,measures="Observed"),MB_12S_meta$YEAR_DATE, MB_12S_meta$locus),c("richness","YEAR_DATE", "locus")))
+dummy_data2 <- c(NA,"2016-04-21","12S")
+dummy_data1 <- c(NA,"2015-04-30","12S")
+dummy12S <- setNames(as.data.frame(rbind(dummy_data2,dummy_data1)), c("richness","YEAR_DATE", "locus"))
+dummy12S$richness <- as.numeric(dummy12S$richness)
+richness_12S_MB <- rbind(richness_12S_MB,dummy12S)
+richness_12S_MB$YEAR_DATE <- factor(richness_12S_MB$YEAR_DATE, levels=c("2015-04-30","2015-07-07","2015-10-09","2015-12-15","2016-04-21","2016-08-31","2016-09-26","2016-12-14"))
+richness_COI_MB <- setNames(cbind(estimate_richness(genus_glom_MB_COI,measures="Observed"),new_COI_MB_meta$YEAR_DATE,new_COI_MB_meta$locus,richness_COI_MB),c("richness","YEAR_DATE", "locus"))
+write_csv(as.data.frame(richness_18S_MB), paste0("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/richness_18S_MB.csv"))
+write_csv(as.data.frame(richness_16S_MB), paste0("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/richness_16S_MB.csv"))
+write_csv(as.data.frame(richness_12S_MB), paste0("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/richness_12S_MB.csv"))
+write_csv(as.data.frame(richness_COI_MB), paste0("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/richness_COI_MB.csv"))
+
+
+#########################
+pdf(file="/Users/anni_djurhuus/Documents/Projects/MBON/m2w/boxplot_richness.pdf",width=9,height=9)
+par(mfrow=c(2,2))
+par(mar=c(1,5,3,0))
+boxplot(richness_18S_MB$richness/max(richness_18S_MB$richness)~richness_18S_MB$YEAR_DATE,ylab="Relative richness\n(Observed richness/Max richness)", at=c(1,4,7,9,13,17,18,21),main="MBNMS",cex.axis = 0.8,las=2,ylim=c(0,1.1), col=cbbPalette_alpha[3], xaxt="n")
+par(new=TRUE)
+boxplot(richness_12S_MB$richness/19~richness_12S_MB$YEAR_DATE, ylim=c(0,1.1), yaxt="n", xaxt="n", at=c(1,4,7,9,13,17,18,21),col=cbbPalette_alpha[11], alpha=0.4)
+par(new=TRUE)
+boxplot(richness_16S_MB$richness/max(richness_16S_MB$richness)~richness_16S_MB$YEAR_DATE, ylim=c(0,1.1), at=c(1,4,7,9,13,17,18,21), yaxt="n",xaxt="n",col=cbbPalette_alpha[2],alpha=0.4)
+par(new=TRUE)
+boxplot(richness_COI_MB$richness/max(richness_COI_MB$richness)~richness_COI_MB$YEAR_DATE, at=c(1,4,7,9,13,17,18,21), ylim=c(0,1.1), yaxt="n",xaxt="n",col=cbbPalette_alpha[4],alpha=0.9)
+abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
+#legend("topleft",title="Locus",c("16S","18S","COI","12S"), fill=c(cbbPalette_alpha[2],cbbPalette[3],cbbPalette_alpha[4],cbbPalette_alpha[11]),  ncol=1,cex=0.8)
+#axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
+     #labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
+      #        "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
+#mtext("2015", side=1, line=3, at=4,cex=0.8)
+#mtext("2016", side=1, line=3, at=16,cex=0.8)
+
+
+######### FKNMS #######
+richness_16S_FK <- setNames(cbind(estimate_richness(genus_glom_16S_FK, measures="Observed"),metadata_16S_FK$date_16S, metadata_16S_FK$locus),c("richness","YEAR_DATE", "locus"))
+richness_18S_FK <- setNames(cbind(estimate_richness(genus_glom_18S_FK, measures="Observed"),metadata_18S_FK$DATE_YEAR_MONTH, metadata_18S_FK$locus),c("richness","YEAR_DATE", "locus"))
+richness_COI_FK <- setNames(cbind(estimate_richness(genus_glom_COI_FK, measures="Observed"),metadata_COI_FK$date_COI, metadata_COI_FK$locus),c("richness","YEAR_DATE", "locus"))
+richness_12S_FK <- setNames(cbind(estimate_richness(genus_glom_12S_FK, measures="Observed"),metadata_12S_FK$date, metadata_12S_FK$locus),c("richness","YEAR_DATE", "locus"))
+library(readr)
+write_csv(as.data.frame(richness_16S_FK), paste0("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/richness_16S_FK.csv"))
+write_csv(as.data.frame(richness_18S_FK), paste0("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/richness_18S_FK.csv"))
+write_csv(as.data.frame(richness_COI_FK), paste0("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/richness_COI_FK.csv"))
+write_csv(as.data.frame(richness_12S_FK), paste0("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/richness_12S_FK.csv"))
+
+
+par(mar=c(1,1,3,4))
+boxplot(richness_16S_FK$richness/max(richness_16S_FK$richness)~richness_16S_FK$YEAR_DATE, at=c(1,3,6,8,10,12,14,16,18,20),xaxt="n",main="FKNMS", cex.axis = 0.8,las=2,ylim=c(0,1.1), yaxt="n",col=cbbPalette_alpha[2])
+par(new=TRUE)
+boxplot(richness_18S_FK$richness/max(richness_18S_FK$richness)~richness_18S_FK$YEAR_DATE, at=c(1,3,6,8,10,12,14,16,18,20),ylim=c(0,1.1),xaxs="i", yaxt="n",xaxt="n", col=cbbPalette_alpha[3],alpha=0.4)
+par(new=TRUE)
+boxplot(richness_COI_FK$richness/max(richness_COI_FK$richness)~richness_COI_FK$YEAR_DATE, at=c(1,3,6,8,10,12,14,16,18,20), ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[4],alpha=0.5)
+par(new=TRUE)
+boxplot(richness_12S_FK$richness/max(richness_12S_FK$richness)~richness_12S_FK$YEAR_DATE, at=c(1,3,6,8,10,12,14,16,18,20), ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[11],alpha=0.9)
+legend("bottomright",title="Locus",c("16S - microorganisms","18S - phytoplankton","COI - invertebrates","12S - vertebrates"), fill=c(cbbPalette_alpha[2],cbbPalette_alpha[3],cbbPalette_alpha[4],cbbPalette_alpha[11]),  ncol=1,cex=0.8, bty="n")
+abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
+#axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
+#     labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
+#              "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
+#mtext("2015", side=1, line=3, at=4, cex=0.8)
+#mtext("2016", side=1, line=3, at=16,cex=0.8)
+#dev.off()
+
+#par(new=TRUE)
+#boxplot(richness_COI_FK$richness~richness_COI_FK$YEAR_DATE, ylim=c(0,250), yaxt="n",xaxt="n",col=cbbPalette_alpha[4],alpha=0.9)
+```
+
+
+```{r, eval=FALSE, include=FALSE}
+############## Boxplot with total genera and temperature #############################
+env_FK <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/WS_FKNMS_GHRSST_15_16.csv", header=TRUE)
+env_FK$Date <- dmy(env_FK$Date)
+env_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/MBNMS_GHRSST_15_16.csv", header=TRUE)
+env_MB$Date <- dmy(env_MB$Date)
+
+par(mar=c(4,5,0,0))
+total_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/total_richness_MB.csv", header=TRUE)
+boxplot(total_MB$Total~total_MB$YEAR_DATE, at=c(1,4,7,9,13,17,18,21), ylim=c(0,850),xaxt="n",ylab="Total observed richness",col="white",alpha=0.9)
+abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
+axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
+     labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
+              "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
+mtext("2015", side=1, line=3, at=4,cex=0.8)
+mtext("2016", side=1, line=3, at=16,cex=0.8)
+par(new=TRUE)
+plot(env_MB$Mean.SST~env_MB$Date,type="l",ylim=c(11,32), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
+#axis(side=4)
+#mtext("Sea surface anomaly",side=4,line=1.8,las=3)
+
+############# FKNMS #######
+par(mar=c(4,1,0,4))
+total_FK <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/total_richness_FK.csv", header=TRUE)
+boxplot(total_FK$Total~total_FK$YEAR_DATE, at=c(1,3,6,8,10,12,14,16,18,20), ylim=c(0,850),yaxt="n",xaxt="n",ylab="Total observed richness",col="white",alpha=0.9)
+abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
+axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
+     labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
+              "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
+mtext("2015", side=1, line=3, at=4,cex=0.8)
+mtext("2016", side=1, line=3, at=16,cex=0.8)
+par(new=TRUE)
+plot(env_FK$Mean.SST~env_FK$Date,type="l",ylim=c(11,32), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
+axis(side=4)
+mtext("SST",side=4,line=1.8,las=3, cex = 0.8)
+dev.off()
+
+
+#########################################################################################
+
+pdf(file="/Users/anni_djurhuus/Documents/Projects/MBON/m2w/cor_temp_MB.pdf",width=9,height=12)
+par(mfrow=c(3,2))
+plot(total_MB$X16S~new_18S_MB_meta$TMP_C, col="Black", pch=19, main="16S richness with temperature", xlab="Temperature", ylab="Genera")
+plot(total_MB$X18S~new_18S_MB_meta$TMP_C, col="Black", pch=19, main="18S richness with temperature", xlab="Temperature", ylab="Genera")
+plot(total_MB$COI~new_18S_MB_meta$TMP_C, col="Black", pch=19, main="COI richness with temperature", xlab="Temperature", ylab="Genera")
+plot(total_MB$X12S~new_18S_MB_meta$TMP_C, col="Black", pch=19, main="12S richness with temperature", xlab="Temperature", ylab="Genera")
+plot(total_MB$Total~new_18S_MB_meta$TMP_C, col="Black", pch=19, main="Total richness with temperature", xlab="Temperature", ylab="Genera")
+legend("topleft", "cor.test: p-value=0.025 \n t=2.41, df=22", bty="n")
+cor.test(total_MB$Total,as.numeric(new_18S_MB_meta$TMP_C),method=c("pearson"))
+dev.off()
+
+pdf(file="/Users/anni_djurhuus/Documents/Projects/MBON/m2w/cor_temp_FK.pdf",width=9,height=12)
+par(mfrow=c(3,2))
+plot(total_FK$X16S~total_FK$avg_temp, col="Black", pch=19, main="16S richness with temperature", xlab="Temperature", ylab="Genera")
+plot(total_FK$X18S~total_FK$avg_temp, col="Black", pch=19, main="18S richness with temperature", xlab="Temperature", ylab="Genera")
+plot(total_FK$COI~total_FK$avg_temp, col="Black", pch=19, main="COI richness with temperature", xlab="Temperature", ylab="Genera")
+plot(total_FK$X12S~total_FK$avg_temp, col="Black", pch=19, main="12S richness with temperature", xlab="Temperature", ylab="Genera")
+plot(total_FK$Total~total_FK$avg_temp, col="Black", pch=19, main="Total richness with temperature", xlab="Temperature", ylab="Genera")
+legend("topleft", "cor.test: p-value=0.83 \n t=-0.222, df=27", bty="n")
+cor.test(total_FK$Total,as.numeric(total_FK$avg_temp),method=c("pearson"))
+dev.off()
+```
+

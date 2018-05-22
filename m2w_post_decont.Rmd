@@ -1,0 +1,339 @@
+---
+title: "Tracking ecosystem shifts, from microorganisms to mammals, with environmental DNA"
+author: "Anni Djurhuus"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(include = FALSE)
+library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq);  library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc)
+```
+
+```{r, include=FALSE}
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00")
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+add.alpha <- function(col, alpha=1){
+  if(missing(col))
+    stop("Please provide a vector of colours.")
+  apply(sapply(col, col2rgb)/255, 2, 
+                     function(x) 
+                       rgb(x[1], x[2], x[3], alpha=alpha))  
+}
+cbbPalette_alpha <- add.alpha(cbbPalette, alpha=0.5)
+```
+
+##### To do list:
+4. Put all genes into the same dataset, resulting in 2 datasets (one per geographic location), each of which has families in rows, samples in columns.
+6. Look for wholesale shifts over the 2015-2016 timeframe. Anchovies-sardines is the big one I’ve been suspecting. This may or may not be related to El Niño.
+7. Correlate data with Anchovies (on ranks, i.e. spearman or kendell), not temperature. Make a correlation matrix.
+8. Filter OTUs from occupancy data
+9. Decontaminate with Ryans script
+10. Eveness of communities with samples. 
+
+##### General guidelines for Nature manuscripts:
+-Manuscript do not normally exceed 5 pages of Nature
+-Up to 50 references (One page of undiluted text is about 1,300 words.)
+-Summary up to 150 words: This summary contains a paragraph (2-3 sentences) of basic-level introduction to the field; a brief account of the background and rationale of the work; a statement of the main conclusions (introduced by the phrase 'Here we show' or its equivalent); and finally, 2-3 sentences putting the main findings into general context so it is clear how the results described in the paper have moved the field forwards.
+-main text of no more than 3,500 words and 6 display items (figures, tables).
+-Statistical information: Comprehensive information on the statistical analyses used must be included in the paper. The Methods must include a statistics section where you describe the statistical tests used and whether they were one- or two-tailed. Please ensure that the error bars are defined throughout the figures. For all statistics (including error bars), provide the EXACT n values used to calculate the statistics. Where relevant, provide exact values for both significant and non-significant P values. For ANOVAs, provide F values and degrees of freedom. For t-tests, provide t-values and degrees of freedom. Please specifically define the replicates.
+
+##### Hypotheses:
+Based on the 12S data there is a wholesale shift in the ecosystem from one state to another, with the first state being between about March 2014 and June 2015, and the second state being between June 2015 and Dec 2016. There is a tradeoff between anchovy- and sardine- dominated signals. 
+In the 18s dataset for Monterey, krill (Euphausiidae) are in the first set of dates, and disappear in the second; Cyclopid copepods (Cyclopidae) do the opposite.  Temoridae (also copepods) peak in the transitional time between these hypothesized states.  Diatom-wise, Thalassiosiraceae occurs during both time periods, but nearly absent between them.  Rhizosoleniaceae is in the second time period, but not the first. Chaetocerotaceae mostly in the second.  Re: Annelids, Echiurids in the second phase, spionids during the transition.  
+
+```{r load libraries, include=FALSE}
+#install.packages("googledrive")
+library("googledrive"); library(tibble); library("magrittr"); library("phyloseq"); library("ggplot2"); library("reshape2"); library(cowplot); library(ggplot2); library(lubridate); library(gtools);library(dplyr); library(plyr)
+```
+
+###Main 
+Global change in climate, environments, and shifts in biodiversity distribution necessitate assessments to provide a baseline measure to gauge undergoing changes. Traditionally marine biodiversity assessments are conducted via methods, such as trawling or aerial surveys focusing on macro-organisms. More recently global and local assessments have been conducted to explore microbial communities unveiling the vast microbial diversity that exists. Cross trophic level assessments of biodiversity are rarely conducted, and the simultaneous biodiversity fluxes from microorganisms to macro-organisms over temporal scales are non-existing, though it is with time-series studies where changes in the biodiversity can be assessed. Whether due to anthropogenic or natural disturbances there is a general trend of biodiversity decline (Butchart et al, 2010), which needs to be monitored. Efforts to assess these changes and declines have not yet connected the trophic level interactions to understand the total community impact. In order to make biodiversity assessments more accurate, we require better methods and increased observation efforts of all organisms. 
+
+While climate and aspects of environmental change can be measured autonomously, biodiversity assessments have traditionally been conducted manually. The genetic trace by the cell(s) or extracellular DNA of an organism in the surrounding environment, referred to as environmental DNA (eDNA), allows for the detection of that organism from an environmental sample. This method has been applied in microbial ecology in many terrestrial and aquatic studies and has been more recently applied to detection of eukaryotic organisms. These methods are also being adapted and applied to detection of cancer types in human blood samples (Diaz & Bardelli, 2014). As these methods become more optimized, the molecular detection of organisms has the potential to assist in environmental health assessments and management applications.
+
+Sequencing of environmental samples such as seawater is now applied in a macrobial sense across a range of trophic levels (“microbes to mammals”) (Trivedi et al., 2016; Valentini et al., 2016), and approaches used to inventory individuals (Ardura et al., 2013; Harada et al., 2015; Thompson et al., 2016) are being applied to assemblages (Carugati et al., 2015; Zimmermann et al., 2015; Aylagas et al., 2016, Djurhuus et al., 2018). Studies demonstrate DNA metabarcoding to be a reliable method for biodiversity assessment with potential for inferring biotic indices for marine ecosystem quality assessment (Aylagas et al., 2014; Pawlowski et al., 2014; Cowart et al., 2015; Elbrecht and Leese, 2015; Visco et al., 2015; Ferrera et al., 2016).
+
+Increased monitoring efforts and leveraging eDNA to inform marine biodiversity trends are goals of the Marine Biodiversity Observation Network (MBON) (Muller-Karger et al., 2014). This initiative has tried to address gaps in the marine realm, where monitoring has been standard in many terrestrial environments (Duffy et al, 2013). 
+
+Here we explore the ability of multiple markers to detect organisms in water column samples from bacteria to vertebrates. Our study detects seasonal trends as well as changes in biodiversity during the 2015-2016 El Niño event. 
+
+###Methods
+All data was agglomerated by family and all annotations representing fewer than 0.001% of the data were filtered out.  
+
+All analysis was done using the R statistical software (R Core Team, 2018). 
+
+
+```{r read in FK data undergone decontamination, include=FALSE}
+FK_16S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/FK/16S/FK_16S_otu_table.csv", row.names = 1)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/FK/16S/FK_16S_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/FK/16S/FK_16S_sam_table.csv", row.names = 1)))
+
+FK_18S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/FK/18S/FK_18S_otu_table.csv", row.names = 1)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/FK/18S/FK_18S_tax_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/FK/18S/FK_18S_sam_table.csv", row.names = 1)))
+
+FK_COI_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/FK/COI/FK_COI_otu_table.csv", row.names = 1)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/FK/COI/FK_COI_tax_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/FK/COI/FK_COI_sam_table.csv", row.names = 1)))
+
+#MB_12S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/12S/MB_12S_otu_table.csv", row.names = 1)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/12S/MB_12S_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/12S/MB_12S_sam_data.csv", row.names = 1)))
+```
+
+
+
+```{r read in MB data undergone decontamination, include=FALSE}
+MB_16S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/16S/MB_16S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/16S/MB_16S_tax_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/16S/MB_16S_sam_table.csv", row.names = 1)))
+
+MB_18S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/18S/MB_18S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/18S/MB_18S_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/18S/MB_18S_sam_table.csv", row.names = 1)))
+
+MB_COI_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/COI/MB_COI_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/COI/MB_COI_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/COI/MB_COI_sam_table.csv", row.names = 1)))
+
+MB_12S_m2w <- merge_phyloseq(otu_table(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/12S/MB_12S_otu_table.csv", row.names = 1, check.names = FALSE), taxa_are_rows = TRUE), tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/12S/MB_12S_taxa_table.csv", row.names = 1))), sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/12S/MB_12S_sam_data.csv",row.names = 1)))
+```
+
+
+
+```{r agglomerate by family FK, include=FALSE}
+FK_16S_fam <- tax_glom(FK_16S_m2w, "Rank5")
+FK_18S_fam <- tax_glom(FK_18S_m2w, "Rank5")
+FK_COI_fam <- tax_glom(FK_COI_m2w, "Rank5")
+#FK_12S_fam <- tax_glom(FK_12S_prop, "Rank5")
+################ MB ##################################
+MB_16S_fam <- tax_glom(MB_16S_m2w, "Rank5")
+MB_18S_fam <- tax_glom(MB_18S_m2w, "Rank5")
+MB_COI_fam <- tax_glom(MB_COI_m2w, "Rank5")
+MB_12S_fam <- tax_glom(MB_12S_m2w, "Rank5")
+```
+
+###Results
+####Plots
+Richness calculated on observed number of families. Only data with a relative abundance above 0.001% is included.
+```{r plotting richness based on family FK, echo=F, fig.width=8, fig.height=5, fig.cap="\\label{fig:fig1}Relative number of families for the Florida Keys National Marine Sanctuary (FKNMS) and Monterey Bay National Marine Sanctuary (MBNMS)"}
+richness_16S_FK <- setNames(cbind(estimate_richness(FK_16S_fam, measures="Observed"),FK_16S_fam@sam_data$collection_date, FK_16S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_18S_FK <- setNames(cbind(estimate_richness(FK_18S_fam, measures="Observed"),FK_18S_fam@sam_data$collection_date, FK_18S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_COI_FK <- setNames(cbind(estimate_richness(FK_COI_fam, measures="Observed"),FK_COI_fam@sam_data$collection_date, FK_COI_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+#richness_12S_FK <- setNames(cbind(estimate_richness(FK_12S_fam, measures="Observed"),FK_12S_fam@sam_data$collection_date, FK_12S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+
+#pdf(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/figs/FK_fam_diversity.pdf")
+par(mfrow=c(1,2))
+#par(mar=c(1,1,3,4))
+boxplot(richness_16S_FK$richness/max(richness_16S_FK$richness)~ymd(richness_16S_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20),xaxt="n",main="FKNMS", ylab=c("Relative number of families"),cex.axis = 0.8,las=2,xlim=c(0.5,21.5),ylim=c(0,1.1),col=cbbPalette_alpha[2])
+par(new=TRUE)
+boxplot(richness_18S_FK$richness/max(richness_18S_FK$richness)~ymd(richness_18S_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20),ylim=c(0,1.1), yaxt="n",xaxt="n", col=cbbPalette_alpha[3],alpha=0.4,xlim=c(0.5,21.5))
+par(new=TRUE)
+boxplot(richness_COI_FK$richness/max(richness_COI_FK$richness)~ymd(richness_COI_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20), ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[4],alpha=0.5,xlim=c(0.5,21.5))
+#par(new=TRUE)
+#boxplot(richness_12S_FK$richness/max(richness_12S_FK$richness)~ymd(richness_12S_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20), ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[11],alpha=0.9)
+legend("bottomright",title="Locus",c("16S - microorganisms","18S - phytoplankton","COI - invertebrates","12S - vertebrates"), fill=c(cbbPalette_alpha[2],cbbPalette_alpha[3],cbbPalette_alpha[4],cbbPalette_alpha[11]),  ncol=1,cex=0.8, bty="n")
+abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
+axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
+     labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
+              "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
+mtext("2015", side=1, line=3, at=4,cex=0.8)
+mtext("2016", side=1, line=3, at=16,cex=0.8)
+#dev.off()
+
+##############################################   MB  #################################################
+richness_16S_MB <- setNames(cbind(estimate_richness(MB_16S_fam, measures="Observed"),MB_16S_fam@sam_data$collection_date, MB_16S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_18S_MB <- setNames(cbind(estimate_richness(MB_18S_fam, measures="Observed"),MB_18S_fam@sam_data$collection_date, MB_18S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_COI_MB <- setNames(cbind(estimate_richness(MB_COI_fam, measures="Observed"),MB_COI_fam@sam_data$collection_date, MB_COI_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_12S_MB <- setNames(cbind(estimate_richness(MB_12S_fam, measures="Observed"),MB_12S_fam@sam_data$collection_date, MB_12S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+
+#pdf(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/figs/MB_fam_diversity.pdf")
+#par(mar=c(1,1,3,4))
+boxplot(richness_16S_MB$richness/max(richness_16S_MB$richness)~ymd(richness_16S_MB$YEAR_DATE), at=c(1,4,7,9,13,17,18,21),xaxt="n",main="MBNMS", cex.axis = 0.8,las=2,ylim=c(0,1.1),ylab=c("Relative number of families"),col=cbbPalette_alpha[2])
+par(new=TRUE)
+boxplot(richness_18S_MB$richness/max(richness_18S_MB$richness)~ymd(richness_18S_MB$YEAR_DATE), at=c(1,4,7,9,13,17,18,21),ylim=c(0,1.1),xaxs="i", yaxt="n",xaxt="n", col=cbbPalette_alpha[3],alpha=0.4)
+par(new=TRUE)
+boxplot(richness_COI_MB$richness/max(richness_COI_MB$richness)~ymd(richness_COI_MB$YEAR_DATE), at=c(1,4,7,9,13,17,18,21), ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[4],alpha=0.5)
+par(new=TRUE)
+boxplot(richness_12S_MB$richness/max(richness_12S_MB$richness)~ymd(richness_12S_MB$YEAR_DATE), at=c(4,7,9,17,18,21), xlim=c(0.5,21.5),ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[11],alpha=0.9)
+legend("bottomright",title="Locus",c("16S - microorganisms","18S - phytoplankton","COI - invertebrates","12S - vertebrates"), fill=c(cbbPalette_alpha[2],cbbPalette_alpha[3],cbbPalette_alpha[4],cbbPalette_alpha[11]),  ncol=1,cex=0.8, bty="n")
+abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
+axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
+     labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
+              "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
+mtext("2015", side=1, line=3, at=4,cex=0.8)
+mtext("2016", side=1, line=3, at=16,cex=0.8)
+#dev.off()
+```
+
+```{r simple correlations FK and MB, include=FALSE}
+tmp_cor_16S_FK <- cor.test(richness_16S_FK$richness,as.numeric(FK_16S_m2w@sam_data$TMP_C),method=c("pearson"))
+tmp_cor_18S_FK <- cor.test(richness_18S_FK$richness,as.numeric(FK_18S_m2w@sam_data$TMP_C),method=c("pearson"))
+tmp_cor_COI_FK <- cor.test(richness_COI_FK$richness,as.numeric(FK_COI_m2w@sam_data$TMP_C),method=c("pearson"))
+#tmp_cor_12S_FK <- cor.test(richness_12S_FK$richness,as.numeric(FK_12S_m2w@sam_data$TMP_C),method=c("pearson"))
+
+chl_cor_16S_FK <- cor.test(richness_16S_FK$richness,as.numeric(FK_16S_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
+chl_cor_18S_FK <- cor.test(richness_18S_FK$richness,as.numeric(FK_18S_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
+chl_cor_COI_FK <- cor.test(richness_COI_FK$richness,as.numeric(FK_COI_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
+#chl_cor_12S_FK <- cor.test(richness_12S_FK$richness,as.numeric(FK_12S@sam_data$CHL_MG_M.3),method=c("pearson"))
+
+tmp_cor_16S_MB <- cor.test(richness_16S_MB$richness,as.numeric(MB_16S_m2w@sam_data$temp),method=c("pearson"))
+tmp_cor_18S_MB <- cor.test(richness_18S_MB$richness,as.numeric(MB_18S_m2w@sam_data$temp),method=c("pearson"))
+tmp_cor_COI_MB <- cor.test(richness_COI_MB$richness,as.numeric(MB_COI_m2w@sam_data$temp),method=c("pearson"))
+tmp_cor_12S_MB <- cor.test(richness_12S_MB$richness,as.numeric(MB_12S_m2w@sam_data$temp),method=c("pearson"))
+
+chl_cor_16S_MB <- cor.test(richness_16S_MB$richness,as.numeric(MB_16S_m2w@sam_data$chlorophyll),method=c("pearson"))
+chl_cor_18S_MB <- cor.test(richness_18S_MB$richness,as.numeric(MB_18S_m2w@sam_data$chlorophyll),method=c("pearson"))
+chl_cor_COI_MB <- cor.test(richness_COI_MB$richness,as.numeric(MB_COI_m2w@sam_data$chlorophyll),method=c("pearson"))
+chl_cor_12S_MB <- cor.test(richness_12S_MB$richness,as.numeric(MB_12S_m2w@sam_data$chlorophyll),method=c("pearson"))
+```
+
+
+```{r functions for splitting species and adding taxonomy to highest level available, include=FALSE}
+split_species = function(string, n = 2) {
+  splits = str_split(string, "/", n + 1)
+  res = map_if(splits, ~length(.x) > 2, ~.x[1:n]) %>%
+    map_chr(str_c, collapse = "/")
+  return(res)
+}
+
+add_taxonomy_column = function(physeq, num_species = 2) {
+  tax_df = as.data.frame(tax_table(physeq)) %>%
+    rownames_to_column("OTU") %>%
+    mutate(Rank7 = split_species(Rank7, n = num_species)) %>%
+    mutate(Taxonomy =
+             case_when(
+               is.na(Rank5)  ~ str_c("o:", Rank4),
+               is.na(Rank6)   ~ str_c("f:", Rank5),
+               is.na(Rank7) ~ str_c("g:", Rank6)
+             )
+    )
+  
+  tax = as.matrix(tax_df[, -1])
+  rownames(tax) = tax_df$OTU
+  tax_table(physeq) = tax_table(tax)
+  
+  return(physeq)
+}
+
+
+add_taxonomy_column2 = function(physeq, num_species = 2) {
+  tax_df = as.data.frame(tax_table(physeq)) %>%
+    rownames_to_column("OTU") %>%
+    mutate(Rank7 = split_species(Rank7, n = num_species)) %>%
+    mutate(Taxonomy2 =
+             case_when(
+               is.na(Taxonomy)   ~ str_c("c:", Rank3),
+               is.na(Rank6)   ~ str_c(Taxonomy)             
+             )
+    )
+  
+  tax = as.matrix(tax_df[, -1])
+  rownames(tax) = tax_df$OTU
+  tax_table(physeq) = tax_table(tax)
+  
+  return(physeq)
+}
+
+```
+
+
+```{r transform sample abundance to proportion and make one dataframe per location, echo=FALSE, fig.width=5, fig.height=5, fig.cap="\\label{fig:fig1}Correlation of Engraulidae (Anchovy) and Clupeidae (Sardines) in Monterey Bay during the sampling period"}
+FK_16S_prop  = transform_sample_counts(FK_16S_fam, function(x) x / sum(x))
+FK_18S_prop  = transform_sample_counts(FK_18S_fam, function(x) x / sum(x))
+FK_COI_prop  = transform_sample_counts(FK_COI_fam, function(x) x / sum(x))
+#FK_12S_prop  = transform_sample_counts(FK_12S, function(x) x / sum(x))
+################# MB ###########
+MB_16S_prop  = transform_sample_counts(MB_16S_fam, function(x) x / sum(x))
+MB_18S_prop  = transform_sample_counts(MB_18S_fam, function(x) x / sum(x))
+MB_COI_prop  = transform_sample_counts(MB_COI_fam, function(x) x / sum(x))
+MB_12S_prop  = transform_sample_counts(MB_12S_fam, function(x) x / sum(x))
+
+#################### Match datasets ######################
+# FK_16S_prop@sam_data$sample_name <- row.names(FK_16S_prop@sam_data)
+# FK_18S_prop@sam_data$sample_name <- row.names(FK_18S_prop@sam_data)
+# FK_COI_prop@sam_data$sample_name <- row.names(FK_COI_prop@sam_data)
+# FK_sam_all <- smartbind(data.frame(FK_16S_prop@sam_data),data.frame(FK_18S_prop@sam_data),data.frame(FK_COI_prop@sam_data))
+# 
+# tax_table(FK_16S_prop) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), tax_table(FK_16S_prop)))))
+# FK_16S_prop <- add_taxonomy_column(FK_16S_prop)
+# FK_16S_prop <- add_taxonomy_column2(FK_16S_prop)
+# a <- data.frame(FK_16S_prop@tax_table)
+# 
+# tax_table(FK_18S_prop) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), tax_table(FK_18S_prop)))))
+# FK_18S_prop <- add_taxonomy_column(FK_18S_prop)
+# 
+# tax_table(FK_COI_prop) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), tax_table(FK_COI_prop)))))
+# FK_COI_prop <- add_taxonomy_column(FK_COI_prop)
+# 
+# FK_taxa_all <- data.frame(FK_COI_prop@tax_table)
+
+################################## MB #######################
+MB_16S_prop@sam_data$sample_name <- row.names(MB_16S_prop@sam_data)
+MB_18S_prop@sam_data$sample_name <- row.names(MB_18S_prop@sam_data)
+MB_COI_prop@sam_data$sample_name <- row.names(MB_COI_prop@sam_data)
+MB_12S_prop@sam_data$sample_name <- row.names(MB_12S_prop@sam_data)
+MB_sam_all <- smartbind(data.frame(MB_16S_prop@sam_data),data.frame(MB_18S_prop@sam_data),data.frame(MB_COI_prop@sam_data),data.frame(MB_12S_prop@sam_data))
+
+tax_table(MB_16S_prop) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA),gsub('unknown', as.character(NA), tax_table(MB_16S_prop))))))
+MB_16S_prop <- add_taxonomy_column(MB_16S_prop)
+MB_16S_prop <- add_taxonomy_column2(MB_16S_prop)
+MB_16S_prop <- subset_taxa(MB_16S_prop,Taxonomy2 !="NA")
+MB_16S_prop <- tax_glom(MB_16S_prop,"Taxonomy2")
+taxa_names(MB_16S_prop) <- paste(MB_16S_prop@tax_table[,9])
+
+tax_table(MB_COI_prop) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_COI_prop))))))
+MB_COI_prop <- add_taxonomy_column(MB_COI_prop)
+MB_COI_prop <- add_taxonomy_column2(MB_COI_prop)
+MB_COI_prop <- subset_taxa(MB_COI_prop,Taxonomy2 !="NA")
+MB_COI_prop <- tax_glom(MB_COI_prop,"Taxonomy2")
+taxa_names(MB_COI_prop) <- paste(MB_COI_prop@tax_table[,9])
+
+tax_table(MB_18S_prop) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_18S_prop))))))
+MB_18S_prop <- add_taxonomy_column(MB_18S_prop)
+MB_18S_prop <- add_taxonomy_column2(MB_18S_prop)
+MB_18S_prop <- subset_taxa(MB_18S_prop,Taxonomy2 !="NA")
+MB_18S_prop <- tax_glom(MB_18S_prop,"Taxonomy2")
+taxa_names(MB_18S_prop) <- paste(MB_18S_prop@tax_table[,9])
+
+tax_table(MB_12S_prop) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_12S_prop))))))
+MB_12S_prop <- add_taxonomy_column(MB_12S_prop)
+MB_12S_prop <- add_taxonomy_column2(MB_12S_prop)
+MB_12S_prop <- subset_taxa(MB_12S_prop,Taxonomy2 !="NA")
+taxa_names(MB_12S_prop) <- paste(MB_12S_prop@tax_table[,9])
+
+MB_all_tax <- data.frame(t(merge_phyloseq(MB_COI_prop@otu_table,MB_16S_prop@otu_table,MB_12S_prop@otu_table,MB_18S_prop@otu_table)))
+#write.csv(MB_all_tax, "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_all_taxa.csv")  #is this the best way to save biom files?
+MB_some <- setNames(data.frame(cbind(MB_all_tax$f.Noelaerhabdaceae,MB_all_tax$f.Paracalanidae,MB_all_tax$f.Pelagibacteraceae,MB_all_tax$f.Skeletonemataceae,MB_all_tax$f.Thalassiosiraceae,MB_all_tax$f.Sagittidae,MB_all_tax$f.Clupeidae,MB_all_tax$f.Engraulidae,MB_all_tax$f.Dinobryaceae,MB_all_tax$c.Oomycetes)),c("f.Noelaerhabdaceae","f.Paracalanidae","f.Pelagibacteraceae","f.Skeletonemataceae","f.Thalassiosiraceae","f.Sagittidae","f.Clupeidae","f.Engraulidae","f.Dinobryaceae","c.Oomycetes"))
+row.names(MB_some) <- row.names(MB_all_tax)
+plot(MB_some)
+
+richness_16S_FK <- setNames(cbind(estimate_richness(FK_16S_fam, measures="Observed"),FK_16S_fam@sam_data$collection_date, FK_16S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+
+
+plot(MB_all_tax$f.Engraulidae,MB_all_tax$f.Clupeidae, ylab="Clupeidae",xlab="Engraulidae", pch=19, col=cbPalette[as.factor(MB_sam_all$month)])
+
+detach("package:plyr", unload=TRUE)
+library(Hmisc)
+#install.packages("corrplot")
+library(corrplot)
+
+??rcorr
+corr_subj_data <-rcorr(MB_all_tax,type = c("pearson"))
+corr_matrix <- corr_subj_data$r
+p_vals <- corr_subj_data$P
+p_vals[p_vals >= 0.01] <- NA
+
+correlation_MB <-cor(MB_all_tax)
+head(round(correlation_MB,2))
+#col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(correlation_MB, type="upper",order="hclust",tl.col="black", tl.srt=45)
+
+
+```
+
+##### Seasonal trends
+We performed a pearson correlation on total number of families with temperature for each genetic marker for both locations. The correlation observed with temperature was of 18S from Monterey Bay (p = `r tmp_cor_18S_MB[3]`). In addition 16S from Monterey Bay was strongly correlated with chlorophyll (p = `r chl_cor_16S_MB[3]`).
+
+<!--All other datasets had the following p-values, Florida Keys: 18S p = `r tmp_cor_18S_FK[3]`, COI p = `r tmp_cor_COI_FK[3]`, and 12S p = ?, Monterey Bay: 16S p = `r tmp_cor_16S_MB[3]`, COI p = `r tmp_cor_COI_MB[3]`, and 12S p = `r tmp_cor_12S_MB[3]`, -->
+
+###Pseudo-autocorrelation
+From a pseudo-autocorrelation test (Kelly et al. 2018, PeerJ) we saw that the communities between samples have significant changes with time. Based on the entire dataset the period post to July 2015...
+
+12S data there is a wholesale shift in the ecosystem from one state to another, with the first state  June 2015, and the second state being between June 2015 and Dec 2016. There is a tradeoff between anchovy- and sardine- dominated signals. When the 
+In the 18s dataset for Monterey, krill (Euphausiidae) are in the first set of dates, and disappear in the second; Cyclopid copepods (Cyclopidae) do the opposite.  Temoridae (also copepods) peak in the transitional time between these hypothesized states.  Diatom-wise, Thalassiosiraceae occurs during both time periods, but nearly absent between them.  Rhizosoleniaceae is in the second time period, but not the first. Chaetocerotaceae mostly in the second.  Re: Annelids, Echiurids in the second phase, spionids during the transition. 
+
+```{r some line plots}
+
+
+
+```
+

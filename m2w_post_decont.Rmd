@@ -7,7 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 #knitr::opts_chunk$set(include = FALSE)
-library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq);  library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot)
+library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq);  library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro) 
+
 ```
 
 ```{r, include=FALSE}
@@ -81,98 +82,7 @@ MB_12S_m2w <- merge_phyloseq(otu_table(read.csv(file = "/Users/anni_djurhuus/Doc
 #a<-data.frame(MB_12S_m2w@sam_data)
 ```
 
-
-```{r agglomerate by family FK, include=FALSE}
-FK_16S_fam <- tax_glom(FK_16S_m2w, "Rank5")
-FK_18S_fam <- tax_glom(FK_18S_m2w, "Rank5")
-FK_COI_fam <- tax_glom(FK_COI_m2w, "Rank5")
-#FK_12S_fam <- tax_glom(FK_12S_m2w, "Rank5")
-################ MB ##################################
-MB_16S_fam <- tax_glom(MB_16S_m2w, "Rank5")
-MB_18S_fam <- tax_glom(MB_18S_m2w, "Rank5")
-MB_COI_fam <- tax_glom(MB_COI_m2w, "Rank5")
-MB_12S_fam <- tax_glom(MB_12S_m2w, "Rank5")
-```
-
-###Results
-####Plots
-Richness calculated on observed number of taxa Only data with a relative abundance above 0.001% is included.
-```{r plotting richness based on family FK, echo=F, fig.width=8, fig.height=5, fig.cap="\\label{fig:fig1}Figure 1: Relative number of taxa for all loci (16S, 18S, COI, and 12S). A: Florida Keys National Marine Sanctuary (FKNMS) and B: Monterey Bay National Marine Sanctuary (MBNMS) from April 2015 - December 2016"}
-richness_16S_FK <- setNames(cbind(estimate_richness(FK_16S_fam, measures="Observed"),FK_16S_fam@sam_data$collection_date, FK_16S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
-richness_18S_FK <- setNames(cbind(estimate_richness(FK_18S_fam, measures="Observed"),FK_18S_fam@sam_data$collection_date, FK_18S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
-richness_COI_FK <- setNames(cbind(estimate_richness(FK_COI_fam, measures="Observed"),FK_COI_fam@sam_data$collection_date, FK_COI_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
-#richness_12S_FK <- setNames(cbind(estimate_richness(FK_12S_fam, measures="Observed"),FK_12S_fam@sam_data$collection_date, FK_12S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
-
-#pdf(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/figs/FK_fam_diversity.pdf")
-par(mfrow=c(1,2))
-par(mar=c(4,5,2,0))
-boxplot(richness_16S_FK$richness/max(richness_16S_FK$richness)~dmy(richness_16S_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20),xaxt="n",main="", ylab=c("Relative number of taxa"),cex.axis = 0.8,las=2,xlim=c(0.5,21.5),ylim=c(0,1.1),col=cbbPalette_alpha[2])
-par(new=TRUE)
-boxplot(richness_18S_FK$richness/max(richness_18S_FK$richness)~ymd(richness_18S_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20),ylim=c(0,1.1), yaxt="n",xaxt="n", col=cbbPalette_alpha[3],alpha=0.4,xlim=c(0.5,21.5))
-par(new=TRUE)
-boxplot(richness_COI_FK$richness/max(richness_COI_FK$richness)~ymd(richness_COI_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20), ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[4],alpha=0.5,xlim=c(0.5,21.5))
-#par(new=TRUE)
-#boxplot(richness_12S_FK$richness/max(richness_12S_FK$richness)~ymd(richness_12S_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20), ylim=c(0,1.1),xlim=c(0.5,21.5),yaxt="n",xaxt="n",col=cbbPalette_alpha[11],alpha=0.9)
-#legend("bottomright",title="Locus",c("16S - microorganisms","18S - phytoplankton","COI - invertebrates","12S - vertebrates"), fill=c(cbbPalette_alpha[2],cbbPalette_alpha[3],cbbPalette_alpha[4],cbbPalette_alpha[11]),  ncol=1,cex=0.8, bty="n")
-legend("bottomleft",title="Locus",c("16S - microorganisms","18S - phytoplankton","COI - invertebrates","12S - vertebrates"), fill=c(cbbPalette_alpha[2],cbbPalette_alpha[3],cbbPalette_alpha[4],cbbPalette_alpha[11]),  ncol=1,cex=0.8, bty="n")
-abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
-axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
-     labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
-              "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
-mtext("2015", side=1, line=3, at=4,cex=0.8)
-mtext("2016", side=1, line=3, at=16,cex=0.8)
-legend("topleft", "A", bty="n")
-#dev.off()
-
-##############################################   MB  #################################################
-richness_16S_MB <- setNames(cbind(estimate_richness(MB_16S_fam, measures="Observed"),MB_16S_fam@sam_data$collection_date, MB_16S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
-richness_18S_MB <- setNames(cbind(estimate_richness(MB_18S_fam, measures="Observed"),MB_18S_fam@sam_data$collection_date, MB_18S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
-richness_COI_MB <- setNames(cbind(estimate_richness(MB_COI_fam, measures="Observed"),MB_COI_fam@sam_data$collection_date, MB_COI_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
-richness_12S_MB <- setNames(cbind(estimate_richness(MB_12S_fam, measures="Observed"),MB_12S_fam@sam_data$collection_date, MB_12S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
-
-#pdf(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/figs/MB_fam_diversity.pdf")
-par(mar=c(4,1,2,4))
-boxplot(richness_16S_MB$richness/max(richness_16S_MB$richness)~ymd(richness_16S_MB$YEAR_DATE), at=c(1,4,7,9,13,17,18,21),xaxt="n",main="", cex.axis = 0.8,las=2,yaxt="n",ylim=c(0,1.1),ylab=c("Relative number of taxa"),col=cbbPalette_alpha[2])
-par(new=TRUE)
-boxplot(richness_18S_MB$richness/max(richness_18S_MB$richness)~ymd(richness_18S_MB$YEAR_DATE), at=c(1,4,7,9,13,17,18,21),ylim=c(0,1.1),xaxs="i", yaxt="n",xaxt="n", col=cbbPalette_alpha[3],alpha=0.4)
-par(new=TRUE)
-boxplot(richness_COI_MB$richness/max(richness_COI_MB$richness)~ymd(richness_COI_MB$YEAR_DATE), at=c(1,4,7,9,13,17,18,21), ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[4],alpha=0.5)
-par(new=TRUE)
-boxplot(richness_12S_MB$richness/max(richness_12S_MB$richness)~ymd(richness_12S_MB$YEAR_DATE), at=c(4,7,9,17,18,21), xlim=c(0.5,21.5),ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[11],alpha=0.9)
-abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
-axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
-     labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
-              "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
-mtext("2015", side=1, line=3, at=4,cex=0.8)
-mtext("2016", side=1, line=3, at=16,cex=0.8)
-legend("topleft", "B", bty="n")
-
-#dev.off()
-```
-
-```{r simple correlations FK and MB, include=FALSE}
-tmp_cor_16S_FK <- cor.test(richness_16S_FK$richness,as.numeric(FK_16S_m2w@sam_data$TMP_C),method=c("pearson"))
-tmp_cor_18S_FK <- cor.test(richness_18S_FK$richness,as.numeric(FK_18S_m2w@sam_data$TMP_C),method=c("pearson"))
-tmp_cor_COI_FK <- cor.test(richness_COI_FK$richness,as.numeric(FK_COI_m2w@sam_data$TMP_C),method=c("pearson"))
-#tmp_cor_12S_FK <- cor.test(richness_12S_FK$richness,as.numeric(FK_12S_m2w@sam_data$TMP_C),method=c("pearson"))
-
-chl_cor_16S_FK <- cor.test(richness_16S_FK$richness,as.numeric(FK_16S_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
-chl_cor_18S_FK <- cor.test(richness_18S_FK$richness,as.numeric(FK_18S_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
-chl_cor_COI_FK <- cor.test(richness_COI_FK$richness,as.numeric(FK_COI_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
-#chl_cor_12S_FK <- cor.test(richness_12S_FK$richness,as.numeric(FK_12S_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
-
-tmp_cor_16S_MB <- cor.test(richness_16S_MB$richness,as.numeric(MB_16S_m2w@sam_data$temp),method=c("pearson"))
-tmp_cor_18S_MB <- cor.test(richness_18S_MB$richness,as.numeric(MB_18S_m2w@sam_data$temp),method=c("pearson"))
-tmp_cor_COI_MB <- cor.test(richness_COI_MB$richness,as.numeric(MB_COI_m2w@sam_data$temp),method=c("pearson"))
-tmp_cor_12S_MB <- cor.test(richness_12S_MB$richness,as.numeric(MB_12S_m2w@sam_data$temp),method=c("pearson"))
-
-chl_cor_16S_MB <- cor.test(richness_16S_MB$richness,as.numeric(MB_16S_m2w@sam_data$chlorophyll),method=c("pearson"))
-chl_cor_18S_MB <- cor.test(richness_18S_MB$richness,as.numeric(MB_18S_m2w@sam_data$chlorophyll),method=c("pearson"))
-chl_cor_COI_MB <- cor.test(richness_COI_MB$richness,as.numeric(MB_COI_m2w@sam_data$chlorophyll),method=c("pearson"))
-chl_cor_12S_MB <- cor.test(richness_12S_MB$richness,as.numeric(MB_12S_m2w@sam_data$chlorophyll),method=c("pearson"))
-```
-
-```{r functions for splitting species and adding taxonomy to highest level available, include=FALSE}
+```{r functions for splitting species, adding taxonomy to highest level available and pseudoautocorrelation, include=FALSE,message=FALSE, warning=FALSE}
 split_species = function(string, n = 2) {
   splits = str_split(string, "/", n + 1)
   res = map_if(splits, ~length(.x) > 2, ~.x[1:n]) %>%
@@ -234,14 +144,112 @@ add_taxonomy_column3 = function(physeq, num_species = 2) {
   
   return(physeq)
 }
+
+PA<-function(OTUs, DATES, REFERENCE = 1, METHOD = "euclidian"){
+
+  #library(vegan,verbose = F)
+  
+  #order(DATES) #make sure these are in chronological order; enforce this rule by re-ordering, like so:
+  OTUs<-OTUs[,order(DATES)]
+  DATES<-sort(DATES)
+  
+  referenceTimePoint<-unique(DATES)[REFERENCE] #set a reference time point at a particular sample
+  dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in days, relative to reference point
+  
+  bcdist<-as.matrix(vegan::vegdist(t(OTUs), method=METHOD)) 
+    diag(bcdist)<-NA   #don't count self-comparison within replicates
+  
+    distFUN <- function(x) as.vector(bcdist[DATES==x,DATES==referenceTimePoint]) #function to pull selected distances from matrix
+  
+  dist.res<-lapply(X=unique(DATES), FUN=distFUN)
+    #dist.res<-as.data.frame(t(plyr::ldply(dist.res, rbind)))
+    	maxlength<-max(sapply(dist.res, length))		
+		for(i in 1:length(dist.res)){length(dist.res[[i]])<-maxlength}	#pad to create even columns
+	  dist.res<-as.data.frame(dist.res, check.names=FALSE)	
+    names(dist.res)<-unique(dayVector)
+    
+  return(dist.res)  
+  
+}
+
+OneStep<-function(OTUs, DATES, METHOD = "euclidian"){
+  
+  #order(DATES) #make sure these are in chronological order; enforce this rule by re-ordering, like so:
+  OTUs<-OTUs[,order(DATES)]
+  DATES<-sort(DATES)
+  
+  dayVector<-as.numeric(unique(DATES)[2:length(unique(DATES))])-
+  	as.numeric(unique(DATES)[1:(length(unique(DATES))-1)]) #time difference in days, relative to previous sample
+
+  bcdist<-as.matrix(vegan::vegdist(t(OTUs), method=METHOD)) 
+    diag(bcdist)<-NA   #don't count self-comparison within replicates
+  
+    distFUN <- function(x) as.vector(bcdist[DATES==unique(DATES)[x], DATES==unique(DATES)[x+1]]) #function to pull selected distances from matrix
+
+  dist.res<-lapply(1:(length(unique(DATES))-1), FUN=distFUN)
+     	maxlength<-max(sapply(dist.res, length))		
+		for(i in 1:length(dist.res)){length(dist.res[[i]])<-maxlength}	#pad to create even columns
+	  dist.res<-as.data.frame(dist.res, check.names=FALSE)	
+    names(dist.res)<-paste("Step", 1:(length(unique(DATES))-1), dayVector, "Days", sep="_")
+   
+  return(dist.res) 
+}
+
+
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
 ```
 
 
 ```{r transform sample abundance to proportion and make one dataframe per location, include=FALSE}
-#################### Match datasets ######################
-FK_16S_fam@sam_data$sample_name <- row.names(FK_16S_fam@sam_data)
-FK_18S_fam@sam_data$sample_name <- row.names(FK_18S_fam@sam_data)
-FK_COI_fam@sam_data$sample_name <- row.names(FK_COI_fam@sam_data)
+FK_16S_fam <- tax_glom(FK_16S_m2w, "Rank5")
+FK_18S_fam <- tax_glom(FK_18S_m2w, "Rank5")
+FK_COI_fam <- tax_glom(FK_COI_m2w, "Rank5")
+#FK_12S_fam <- tax_glom(FK_12S_m2w, "Rank5")
+################ MB ##################################
+MB_16S_fam <- tax_glom(MB_16S_m2w, "Rank5")
+MB_18S_fam <- tax_glom(MB_18S_m2w, "Rank5")
+MB_COI_fam <- tax_glom(MB_COI_m2w, "Rank5")
+MB_12S_fam <- tax_glom(MB_12S_m2w, "Rank5")
+
+#################### Match meta-datasets ######################
+#FK_16S_fam@sam_data$sample_name <- row.names(FK_16S_fam@sam_data)
+#FK_18S_fam@sam_data$sample_name <- row.names(FK_18S_fam@sam_data)
+#FK_COI_fam@sam_data$sample_name <- row.names(FK_COI_fam@sam_data)
 #FK_12S_fam@sam_data$sample_name <- row.names(FK_12S_fam@sam_data)
 #FK_sam_all <- smartbind(data.frame(FK_16S_fam@sam_data),data.frame(FK_18S_fam@sam_data),data.frame(FK_COI_fam@sam_data), data.frame(FK_12S_fam@sam_data))
 
@@ -281,10 +289,14 @@ FK_COI_prop = transform_sample_counts(FK_COI_fam,function(x) x / sum(x))
 #Merge all data for FKNMS
 FK_all_tax_ps <- merge_phyloseq(FK_COI_fam@otu_table,FK_16S_fam@otu_table,
                         FK_18S_fam@otu_table,FK_18S_fam@sam_data)
+FK_all_tax_ps_ts <- merge_phyloseq(FK_COI_prop@otu_table,FK_16S_prop@otu_table,
+                                FK_18S_prop@otu_table,FK_18S_fam@sam_data)
+FK_all_tax_ps_ts_merge <- merge_samples(FK_all_tax_ps_ts,"collection_date",fun=mean) #merge samples
 
-badTaxa_FK = c("f:no hits", "f:Bovidae", "f:not assigned", "o:Diptera", "f:Hominidae", "f:Insecta")
+badTaxa_FK = c("f:no hits", "f:Bovidae", "f:not assigned", "o:Diptera", "f:Hominidae", "c:Insecta")
 goodTaxa_FK <- setdiff(taxa_names(FK_all_tax_ps), badTaxa_FK)
 FK_all_tax_ps_nonrel = prune_taxa(goodTaxa_FK,FK_all_tax_ps)
+FK_all_tax_ps_ts_merge = prune_taxa(goodTaxa_FK,FK_all_tax_ps_ts_merge)
 FK_all_tax_df <- data.frame(t(FK_all_tax_ps_nonrel@otu_table))
 FK_all_tax_tf = transform_sample_counts(FK_all_tax_ps_nonrel,function(x) x / sum(x))
 FK_all_tax <- data.frame(FK_all_tax_tf@otu_table)
@@ -295,11 +307,11 @@ FK_all_merge <- data.frame(FK_all_ps_merge@otu_table) # Make dataframe in case i
 FK_all_merge$collection_date <- row.names(FK_all_merge) # paste date into 
 
 ################################## MB #######################
-MB_16S_fam@sam_data$sample_name <- row.names(MB_16S_fam@sam_data)
-MB_18S_fam@sam_data$sample_name <- row.names(MB_18S_fam@sam_data)
-MB_COI_fam@sam_data$sample_name <- row.names(MB_COI_fam@sam_data)
-MB_12S_fam@sam_data$sample_name <- row.names(MB_12S_fam@sam_data)
-library(gtools)
+#MB_16S_fam@sam_data$sample_name <- row.names(MB_16S_fam@sam_data)
+#MB_18S_fam@sam_data$sample_name <- row.names(MB_18S_fam@sam_data)
+#MB_COI_fam@sam_data$sample_name <- row.names(MB_COI_fam@sam_data)
+#MB_12S_fam@sam_data$sample_name <- row.names(MB_12S_fam@sam_data)
+#library(gtools)
 #MB_sam_all <- smartbind(data.frame(MB_16S_fam@sam_data),data.frame(MB_18S_fam@sam_data),data.frame(MB_COI_fam@sam_data),data.frame(MB_12S_fam@sam_data))
 
 tax_table(MB_16S_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA),gsub('unknown', as.character(NA), tax_table(MB_16S_fam))))))
@@ -310,14 +322,6 @@ MB_16S_fam <- tax_glom(MB_16S_fam,"Taxonomy2")
 taxa_names(MB_16S_fam) <- paste(MB_16S_fam@tax_table[,9])
 MB_16S_prop = transform_sample_counts(MB_16S_fam,function(x) x / sum(x))
 
-tax_table(MB_COI_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_COI_fam))))))
-MB_COI_fam <- add_taxonomy_column(MB_COI_fam)
-MB_COI_fam <- add_taxonomy_column2(MB_COI_fam)
-MB_COI_fam <- subset_taxa(MB_COI_fam,Taxonomy2 !="NA")
-MB_COI_fam <- tax_glom(MB_COI_fam,"Taxonomy2")
-taxa_names(MB_COI_fam) <- paste(MB_COI_fam@tax_table[,9])
-MB_COI_prop = transform_sample_counts(MB_COI_fam,function(x) x / sum(x))
-
 tax_table(MB_18S_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_18S_fam))))))
 MB_18S_fam <- add_taxonomy_column(MB_18S_fam)
 MB_18S_fam <- add_taxonomy_column2(MB_18S_fam)
@@ -325,6 +329,14 @@ MB_18S_fam <- subset_taxa(MB_18S_fam,Taxonomy2 !="NA")
 MB_18S_fam <- tax_glom(MB_18S_fam,"Taxonomy2")
 taxa_names(MB_18S_fam) <- paste(MB_18S_fam@tax_table[,9])
 MB_18S_prop = transform_sample_counts(MB_18S_fam,function(x) x / sum(x))
+
+tax_table(MB_COI_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_COI_fam))))))
+MB_COI_fam <- add_taxonomy_column(MB_COI_fam)
+MB_COI_fam <- add_taxonomy_column2(MB_COI_fam)
+MB_COI_fam <- subset_taxa(MB_COI_fam,Taxonomy2 !="NA")
+MB_COI_fam <- tax_glom(MB_COI_fam,"Taxonomy2")
+taxa_names(MB_COI_fam) <- paste(MB_COI_fam@tax_table[,9])
+MB_COI_prop = transform_sample_counts(MB_COI_fam,function(x) x / sum(x))
 
 tax_table(MB_12S_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_12S_fam))))))
 MB_12S_fam <- add_taxonomy_column(MB_12S_fam) # Add family and order assignments 
@@ -336,15 +348,71 @@ MB_12S_prop = transform_sample_counts(MB_12S_fam,function(x) x / sum(x))
 #Merge all data from MB
 MB_all_tax_ps <- merge_phyloseq(MB_COI_fam@otu_table,MB_16S_fam@otu_table,
                                 MB_12S_fam@otu_table,MB_18S_fam@otu_table, MB_18S_fam@sam_data)
-badTaxa_MB = c("f:no hits", "f:Bovidae", "f:not assigned", "o:Diptera","f:Hominidae")
+MB_all_tax_ps_ts <- merge_phyloseq(MB_COI_prop@otu_table,MB_16S_prop@otu_table,
+                                MB_12S_prop@otu_table,MB_18S_prop@otu_table, MB_18S_fam@sam_data) #merge data on previously transformed data.
+MB_all_tax_ps_ts_merge <- merge_samples(MB_all_tax_ps_ts,"collection_date",fun=mean) #merge samples
+
+badTaxa_MB = c("f:no hits", "f:Bovidae", "f:not assigned", "o:Diptera","f:Hominidae","c:Insecta")
 goodTaxa_MB <- setdiff(taxa_names(MB_all_tax_ps), badTaxa_MB)
 MB_all_tax_ps_nonrel = prune_taxa(goodTaxa_MB,MB_all_tax_ps)
+MB_all_tax_ps_ts_merge = prune_taxa(goodTaxa_MB,MB_all_tax_ps_ts_merge)
 MB_all_tax_tf = transform_sample_counts(MB_all_tax_ps_nonrel,function(x) x / sum(x))
 MB_all_tax_df <- data.frame(t(MB_all_tax_ps_nonrel@otu_table))
 #write.csv(MB_all_tax, "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_all_taxa.csv")  #is this the best way to save biom files?
 MB_all_ps_merge <- merge_samples(MB_all_tax_tf,"collection_date",fun=mean) #merge samples
 MB_all_merge <- data.frame(MB_all_ps_merge@otu_table) # Make dataframe in case it is needed
 MB_all_merge$collection_date <- row.names(MB_all_merge) # paste date into 
+```
+
+###Results
+####Plots
+Richness calculated on observed number of taxa Only data with a relative abundance above 0.001% is included.
+```{r plotting richness based on family FK, echo=F, fig.width=8, fig.height=5, fig.cap="\\label{fig:fig1}Figure 1: Relative number of taxa for all loci (16S, 18S, COI, and 12S). A: Florida Keys National Marine Sanctuary (FKNMS) and B: Monterey Bay National Marine Sanctuary (MBNMS) from April 2015 - December 2016"}
+richness_16S_FK <- setNames(cbind(estimate_richness(FK_16S_fam, measures="Observed"),FK_16S_fam@sam_data$collection_date, FK_16S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_18S_FK <- setNames(cbind(estimate_richness(FK_18S_fam, measures="Observed"),FK_18S_fam@sam_data$collection_date, FK_18S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_COI_FK <- setNames(cbind(estimate_richness(FK_COI_fam, measures="Observed"),FK_COI_fam@sam_data$collection_date, FK_COI_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+#richness_12S_FK <- setNames(cbind(estimate_richness(FK_12S_fam, measures="Observed"),FK_12S_fam@sam_data$collection_date, FK_12S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+
+par(mfrow=c(1,2))
+par(mar=c(4,5,2,0))
+boxplot(richness_16S_FK$richness/max(richness_16S_FK$richness)~dmy(richness_16S_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20),xaxt="n",main="", ylab=c("Relative number of taxa"),cex.axis = 0.8,las=2,xlim=c(0.5,21.5),ylim=c(0,1.1),col=cbbPalette_alpha[2])
+par(new=TRUE)
+boxplot(richness_18S_FK$richness/max(richness_18S_FK$richness)~ymd(richness_18S_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20),ylim=c(0,1.1), yaxt="n",xaxt="n", col=cbbPalette_alpha[3],alpha=0.4,xlim=c(0.5,21.5))
+par(new=TRUE)
+boxplot(richness_COI_FK$richness/max(richness_COI_FK$richness)~ymd(richness_COI_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20), ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[4],alpha=0.5,xlim=c(0.5,21.5))
+#par(new=TRUE)
+#boxplot(richness_12S_FK$richness/max(richness_12S_FK$richness)~ymd(richness_12S_FK$YEAR_DATE), at=c(1,3,6,8,10,12,14,16,18,20), ylim=c(0,1.1),xlim=c(0.5,21.5),yaxt="n",xaxt="n",col=cbbPalette_alpha[11],alpha=0.9)
+#legend("bottomright",title="Locus",c("16S - microorganisms","18S - phytoplankton","COI - invertebrates","12S - vertebrates"), fill=c(cbbPalette_alpha[2],cbbPalette_alpha[3],cbbPalette_alpha[4],cbbPalette_alpha[11]),  ncol=1,cex=0.8, bty="n")
+legend("bottomleft",title="Locus",c("16S - microorganisms","18S - phytoplankton","COI - invertebrates","12S - vertebrates"), fill=c(cbbPalette_alpha[2],cbbPalette_alpha[3],cbbPalette_alpha[4],cbbPalette_alpha[11]),  ncol=1,cex=0.8, bty="n")
+abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
+axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
+     labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
+              "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
+mtext("2015", side=1, line=3, at=4,cex=0.8)
+mtext("2016", side=1, line=3, at=16,cex=0.8)
+legend("topleft", "A", bty="n")
+
+##############################################   MB  #################################################
+richness_16S_MB <- setNames(cbind(estimate_richness(MB_16S_fam, measures="Observed"),MB_16S_fam@sam_data$collection_date, MB_16S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_18S_MB <- setNames(cbind(estimate_richness(MB_18S_fam, measures="Observed"),MB_18S_fam@sam_data$collection_date, MB_18S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_COI_MB <- setNames(cbind(estimate_richness(MB_COI_fam, measures="Observed"),MB_COI_fam@sam_data$collection_date, MB_COI_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+richness_12S_MB <- setNames(cbind(estimate_richness(MB_12S_fam, measures="Observed"),MB_12S_fam@sam_data$collection_date, MB_12S_fam@sam_data$locus),c("richness","YEAR_DATE", "locus"))
+
+par(mar=c(4,1,2,4))
+boxplot(richness_16S_MB$richness/max(richness_16S_MB$richness)~ymd(richness_16S_MB$YEAR_DATE), at=c(1,4,7,9,13,17,18,21),xaxt="n",main="", cex.axis = 0.8,las=2,yaxt="n",ylim=c(0,1.1),ylab=c("Relative number of taxa"),col=cbbPalette_alpha[2])
+par(new=TRUE)
+boxplot(richness_18S_MB$richness/max(richness_18S_MB$richness)~ymd(richness_18S_MB$YEAR_DATE), at=c(1,4,7,9,13,17,18,21),ylim=c(0,1.1),xaxs="i", yaxt="n",xaxt="n", col=cbbPalette_alpha[3],alpha=0.4)
+par(new=TRUE)
+boxplot(richness_COI_MB$richness/max(richness_COI_MB$richness)~ymd(richness_COI_MB$YEAR_DATE), at=c(1,4,7,9,13,17,18,21), ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[4],alpha=0.5)
+par(new=TRUE)
+boxplot(richness_12S_MB$richness/max(richness_12S_MB$richness)~ymd(richness_12S_MB$YEAR_DATE), at=c(4,7,9,17,18,21), xlim=c(0.5,21.5),ylim=c(0,1.1),yaxt="n",xaxt="n",col=cbbPalette_alpha[11],alpha=0.9)
+abline(v=c(10), col=c("black"), lty=c(2), lwd=c(1))
+axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
+     labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
+              "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
+mtext("2015", side=1, line=3, at=4,cex=0.8)
+mtext("2016", side=1, line=3, at=16,cex=0.8)
+legend("topleft", "B", bty="n")
 ```
 
 ```{r Richness of total taxa, echo=FALSE, fig.cap="\\label{fig:fig 2}Figure 2: Total richness (number of taxa) in the Florida Keys National Marine Sanctuary and Monterey Bay National Marine Sanctuary through April 2015 - December 2016 with sea surface temperature anomaly. The vertical dashed line represents December 2015.", fig.height=5, fig.width=8}
@@ -362,7 +430,7 @@ mtext("2015", side=1, line=3, at=4,cex=0.8)
 mtext("2016", side=1, line=3, at=16,cex=0.8)
 env_FK <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/WS_FKNMS_GHRSST_15_16.csv", header=TRUE)
 par(new=TRUE)
-plot(env_FK$Anomaly~dmy(env_FK$Date),type="l",ylim=c(0,5), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
+plot(env_FK$Anomaly~dmy(env_FK$Date),type="l",ylim=c(-1,5), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
 legend("topleft", "A", bty="n")
 #axis(side=4)
 #mtext("Sea surface anomaly",side=4,line=1.8,las=3)
@@ -380,39 +448,66 @@ mtext("2015", side=1, line=3, at=4,cex=0.8)
 mtext("2016", side=1, line=3, at=16,cex=0.8)
 env_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/MBNMS_GHRSST_15_16.csv", header=TRUE)
 par(new=TRUE)
-plot(env_MB$Anomaly~dmy(env_MB$Date),type="l",ylim=c(0,5), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
+plot(env_MB$Anomaly~dmy(env_MB$Date),type="l",ylim=c(-1,5), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
 axis(side=4)
 mtext("Sea surface anomaly",side=4,line=1.9,las=3)
 legend("topleft", "B", bty="n")
 ```
 
-```{r plots of correlations, echo=FALSE, fig.cap="\\label{fig:fig 2}Figure 3: Correlation of the top 100 taxa for Florida Keys (top) and Monterey Bay (bottom)  only including significant values of a p-vallue equal to or less than 0.05. These correlation matrices were performed on relative abundance data and ordered by hierarcical clustering on dissimilarities between samples.", fig.height=17, fig.width=10, message=FALSE, warning=FALSE}
+```{r plots of correlations, echo=FALSE, fig.cap="\\label{fig:fig 3}Figure 3: Correlation of the top 100 taxa for Florida Keys (top) and Monterey Bay (bottom)  only including significant values of a p-vallue equal to or less than 0.05. These correlation matrices were performed on relative abundance data and ordered by hierarcical clustering on dissimilarities between samples.", fig.height=17, fig.width=10, message=FALSE, warning=FALSE}
 
 par(mfrow=c(2,1))
-top_50_merge_FK <- prune_taxa(names(sort(taxa_sums(FK_all_ps_merge),
-                                         TRUE)[1:100]),FK_all_ps_merge)
-cor_FK <- as.matrix(top_50_merge_FK@otu_table)
+top_taxa_merge_FK <- prune_taxa(names(sort(taxa_sums(FK_all_tax_ps_ts_merge),
+          TRUE)[1:100]),FK_all_tax_ps_ts_merge)
+cor_FK <- as.matrix(top_taxa_merge_FK@otu_table)
 correlation_FK <-cor(cor_FK)
 res2_FK<-rcorr(cor_FK)
-#flattenCorrMatrix(res2$r, res2$P)
 corrplot(res2_FK$r, type="upper", order="hclust", 
-         p.mat = res2_FK$P, sig.level = 0.05, tl.srt=45,tl.col="black",
-         insig = "blank",tl.cex=0.4,diag=FALSE)
+         p.mat = res2_FK$P, sig.level = 0.05, tl.srt=45,tl.col="black", insig = "blank",tl.cex=0.4,diag=FALSE)
 
-top_50_merge_MB <- prune_taxa(names(sort(taxa_sums(MB_all_ps_merge),
-                                         TRUE)[1:100]),MB_all_ps_merge)
-cor_MB <- as.matrix(top_50_merge_MB@otu_table)
+############## MB #################
+top_taxa_merge_MB <- prune_taxa(names(sort(taxa_sums(MB_all_tax_ps_ts_merge),
+         TRUE)[1:100]),MB_all_tax_ps_ts_merge) #use transformed merged data
+cor_MB <- as.matrix(top_taxa_merge_MB@otu_table)
 correlation_MB <-cor(cor_MB)
 res2_MB<-rcorr(cor_MB)
-#flattenCorrMatrix(res2$r, res2$P)
 corrplot(res2_MB$r, type="lower", order="hclust", 
-         p.mat = res2_MB$P, sig.level = 0.05, tl.srt=45,tl.col="black",
-         insig = "blank",tl.cex=0.4,diag=FALSE)
+         p.mat = res2_MB$P, sig.level = 0.05, tl.srt=45,tl.col="black", insig = "blank",tl.cex=0.4,diag=FALSE)
+
+```
+
+```{r dendrogram of top taxa, echo=FALSE, fig.cap="\\label{fig:fig 4}Figure 4: Dendrogram of the top 100 taxa for FK top and MB bottom.", fig.height=6, fig.width=10, message=FALSE, warning=FALSE}
+ds_FK <- decostand(t(data.frame(top_taxa_merge_FK@otu_table)), "hellinger")
+clust_FK <- vegdist(ds_FK,"euclidian")
+hclust.h.d_FK <- as.dendrogram(hclust(clust_FK,method="average")) #make dendrogram
+ggdendrogram(hclust.h.d_FK,leaf_labels=TRUE)
+
+ds_MB <- decostand(t(data.frame(top_taxa_merge_MB@otu_table)), "hellinger")
+clust_MB <- vegdist(ds_MB,"euclidian")
+hclust.h.d_MB <- as.dendrogram(hclust(clust_MB,method="average")) #make dendrogram
+ggdendrogram(hclust.h.d_MB,leaf_labels=TRUE)
+ 
+#d <- dist(t(data.frame(top_taxa_merge_MB@otu_table)))
+#hc <- hclust(d)
+#plot(hc)
+```
+
+```{r heatmap of top taxa, echo=FALSE, fig.cap="\\label{fig:fig 5}Figure 5: Dendrogram of the top 50 taxa for FK top and MB bottom.", fig.height=8, fig.width=10, message=FALSE, warning=FALSE}
+hmcol <- colorRampPalette(brewer.pal(9, "YlGnBu"))(50)
+rv_FK <- rowVars(t(data.frame(top_taxa_merge_FK@otu_table)))
+idx_FK<- order(-rv_FK)[1:50]
+heatmap.2(t(data.frame(top_taxa_merge_FK@otu_table))[idx_FK,],
+          tracecol="grey80", col=hmcol)
+
+rv_MB <- rowVars(t(data.frame(top_taxa_merge_MB@otu_table)))
+idx_MB <- order(-rv_MB)[1:50]
+heatmap.2(t(data.frame(top_taxa_merge_MB@otu_table))[idx_MB,],
+          tracecol="grey80", col=hmcol)
 
 ```
 
 
-```{r plots and shit, echo=FALSE, fig.cap="\\label{fig:fig 3}Figure 4: Some of the most abundant organisms with the highest correlations from FKNMS (left) and MBNS (right).", fig.height=7, fig.width=8, message=FALSE, warning=FALSE}
+```{r plots and shit, echo=FALSE, fig.cap="\\label{fig:fig 6}Figure 6: Some of the most abundant organisms with the highest correlations from FKNMS (left) and MBNS (right).", fig.height=7, fig.width=8, message=FALSE, warning=FALSE}
 FK_all_merge$collection_date <- ymd(FK_all_merge$collection_date)
 FK_all_merge <- arrange(FK_all_merge, collection_date)
 par(mfcol=c(2,2))
@@ -428,11 +523,10 @@ par(mar=c(3,4,0,1))
 plot(FK_all_merge$f.Oithonidae/max(FK_all_merge$f.Oithonidae)~FK_all_merge$collection_date, col="darkolivegreen3", pch=16, lwd=2,xlab="Date", ylab=c("Relative Abundance"),ylim=c(0,1.2),type="l")
 lines(FK_all_merge$o.Telonemida/max(FK_all_merge$o.Telonemida)~FK_all_merge$collection_date, col="#009E73", pch=16, lwd=2)
 lines(FK_all_merge$f.Centropagidae/max(FK_all_merge$f.Centropagidae)~FK_all_merge$collection_date, col="darkolivegreen", pch=16, lwd=2)
-#lines(FK_all_merge$f.Labridae/max(FK_all_merge$f.Labridae)~FK_all_merge$collection_date,lwd=1.5, col="grey")
 #lines(FK_all_merge$f.Paracalanidae/max(FK_all_merge$f.Paracalanidae)~FK_all_merge$collection_date, col="darkolivegreen", pch=16, lwd=2)
-legend("topleft",legend=c("Oithonidae", "Telonemida","Centropagidae", "Labridae"),col=c("darkolivegreen3","#009E73","darkolivegreen", "grey"),ncol=1, bty="n", lty=c(1,1,1), cex=0.6)
-############ MB #######################
+legend("topleft",legend=c("Oithonidae", "Telonemida","Centropagidae"), col=c("darkolivegreen3","#009E73","darkolivegreen", "grey"), ncol=1, bty="n", lty=c(1,1,1), cex=0.6)
 
+############ MB #######################
 MB_all_merge$collection_date <- dmy(MB_all_merge$collection_date)
 MB_all_merge <- arrange(MB_all_merge, collection_date)
 par(mar=c(1,1,2,4))
@@ -450,9 +544,6 @@ legend("topleft",legend=c("Paracalanidae", "Thalassiosir.","Chaetoceros", "Clupe
 ```
 
 ```{r Ordinations, message=FALSE, warning=FALSE, include=FALSE}
-all_data <- merge_phyloseq(MB_all_tax_tf,FK_all_tax_tf)
-all_Data.ord <- ordinate(all_data, "NMDS", "jaccard")
-
 vegdist_MB <- vegdist(MB_all_tax_df, method="jaccard") # Bray-Curtis distances between the rows
 metaMDS_MB <- metaMDS(vegdist_MB,verbose = FALSE) # k is the number of dim
 #metaMDS_MB # view results
@@ -465,10 +556,13 @@ metaMDS_FK <- metaMDS(vegdist_FK,verbose = FALSE) # k is the number of dim
 # plot solution phytoplankton
 x_FK <- metaMDS_FK$points[,1]
 y_FK <- metaMDS_FK$points[,2]
-#names(sam_MB_df)
+
+all_data <- merge_phyloseq(MB_all_tax_ps_ts,FK_all_tax_ps_ts)
+all_Data.ord <- ordinate(all_data, "NMDS", "jaccard")
 ```
 
-```{r plot ordinations, echo=FALSE, fig.cap="\\label{fig:fig 5}Figure 5: Some of the most abundant organisms with the highest correlations from the Florida Keys National Marine Sanctuary (A) and Monterey Bay National Marine Sanctuary (B). Colored by replicate with point type representing year (2015=square, 2016=circle).", fig.height=5, fig.width=8, message=FALSE, warning=FALSE}
+```{r plot ordinations, echo=FALSE, fig.cap="\\label{fig:fig 7}Figure 7: Some of the most abundant organisms with the highest correlations from the Florida Keys National Marine Sanctuary (A) and Monterey Bay National Marine Sanctuary (B). Colored by replicate with point type representing year (2015=square, 2016=circle).", fig.height=5, fig.width=8, message=FALSE, warning=FALSE}
+
 par(mfrow=c(1,2))
 par(mar=c(4,5,2,0))
 plot(x_FK, y_FK,xlab="Coordinate 1", main="", ylab="",col=c(cbbPalette[FK_18S_fam@sam_data$collection_date]),pch=c(15,19)[as.factor(FK_18S_fam@sam_data$year)])
@@ -487,62 +581,39 @@ plot(envfit(metaMDS_MB, expl_MB),col="black")
 legend("topleft", "B", bty="n")
 ```
 
-```{r ordination plot of all data,echo=FALSE, fig.cap="\\label{fig:fig 6}Figure 6: Ordination on Jaccard distances for the complete dataset for both locations. Orange is Florida, blue is Monterey. This figure is not for publishing.", fig.height=4, fig.width=4, message=FALSE, warning=FALSE}
-plot_ordination(all_data, all_Data.ord, title="NMDS both locations, Jaccard", col="env_package", label="collection_date") + theme_bw() + scale_color_manual(values=c(cbbPalette[3],cbbPalette[2])) + theme(legend.position="none")
-```
-
-```{r, message=FALSE, warning=FALSE, include=FALSE}
-PA<-function(OTUs, DATES, REFERENCE = 1, METHOD = "euclidian"){
-  
-  #library(vegan,verbose = F)
-  
-  #order(DATES) #make sure these are in chronological order; enforce this rule by re-ordering, like so:
-  OTUs<-OTUs[,order(DATES)]
-  DATES<-sort(DATES)
-  
-  referenceTimePoint<-unique(DATES)[REFERENCE] #set a reference time point at a particular sample
-  dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in days, relative to reference point
-  
-  bcdist<-as.matrix(vegan::vegdist(t(OTUs), method=METHOD)) 
-  diag(bcdist)<-NA   #don't count self-comparison within replicates
-  
-  distFUN <- function(x) as.vector(bcdist[DATES==x,DATES==referenceTimePoint]) #function to pull selected distances from matrix
-  
-  dist.res<-sapply(X=unique(DATES), FUN=distFUN)
-  dist.res<-as.data.frame(t(plyr::ldply(dist.res, rbind)))
-  colnames(dist.res)<-unique(dayVector)
-  
-  return(dist.res)  
-  
-}
+```{r ordination plot of all data,echo=FALSE, fig.cap="\\label{fig:fig 8}Figure 8: Ordination on Jaccard distances for the complete dataset for both locations. Orange is Florida, blue is Monterey. This figure is not for publishing, I made it to see how different the communities are between the locations.", fig.height=4, fig.width=4, message=FALSE, warning=FALSE}
+plot_ordination(all_data, all_Data.ord, title="NMDS both locations, Jaccard", col="env_package",label="collection_date") + theme_bw() + scale_color_manual(values=c(cbbPalette[3],cbbPalette[2])) + theme(legend.position="none")
 ```
 
 
-```{r pseudo autocorrelation, eval=FALSE, include=FALSE}
-OTUs_16S_FK<-otu_table(FK_16S_fam)
-dates_16S_FK<-dmy(sample_data(FK_16S_fam)$collection_date)  #
-OTUs_18S_FK<-otu_table(FK_18S_fam)
-dates_18S_FK<-ymd(sample_data(FK_18S_fam)$collection_date)  #
-OTUs_COI_FK<-otu_table(FK_COI_fam)
-dates_COI_FK<-ymd(sample_data(FK_COI_fam)$collection_date)  #
+```{r pseudo autocorrelation with reference point 1 FK, echo=FALSE, fig.cap="\\label{fig:fig 10}Figure 10: Pseudo-autocorrelation of all the markers, message=FALSE, warning=FALSE, FK on top from left to right: 16S, 18S and COI. MB on the bottom, from left to right: 16S, 18S, COI, and 12S.", fig.width=4, fig.height=7}
+OTUs_16S_FK<-otu_table(FK_16S_prop)
+dates_16S_FK<-dmy(sample_data(FK_16S_prop)$collection_date)  #
+OTUs_18S_FK<-otu_table(FK_18S_prop)
+dates_18S_FK<-ymd(sample_data(FK_18S_prop)$collection_date)  #
+OTUs_COI_FK<-otu_table(FK_COI_prop)
+dates_COI_FK<-ymd(sample_data(FK_COI_prop)$collection_date)  #
 
-dist.res_16S_FK <- PA(OTUs=OTUs_16S_FK, DATES=dates_16S_FK, REFERENCE = 1, METHOD="jaccard")
-dist.res_18S_FK <- PA(OTUs=OTUs_18S_FK, DATES=dates_18S_FK, REFERENCE = 1, METHOD="jaccard")
-dist.res_COI_FK <- PA(OTUs=OTUs_COI_FK, DATES=dates_COI_FK, REFERENCE = 1, METHOD="jaccard")
+dist.res_16S_FK <- PA(OTUs=OTUs_16S_FK, DATES=dates_16S_FK, REFERENCE = 1, METHOD="euclidian")
+dist.res_18S_FK <- PA(OTUs=OTUs_18S_FK, DATES=dates_18S_FK, REFERENCE = 1, METHOD="euclidian")
+dist.res_COI_FK <- PA(OTUs=OTUs_COI_FK, DATES=dates_COI_FK, REFERENCE = 1, METHOD="euclidian")
 
-par(mfrow=c(1,3))
-boxplot(dist.res_16S_FK, xlab="Elapsed Time in Days", ylab="Euclidian Distance", ylim=c(0,1),col="deepskyblue3")
-boxplot(dist.res_18S_FK, xlab="Elapsed Time in Days", ylab="Euclidian Distance", ylim=c(0,1),col="deepskyblue3")
-boxplot(dist.res_COI_FK, xlab="Elapsed Time in Days", ylab="Euclidian Distance", ylim=c(0,1),col="deepskyblue3")
+par(mfrow=c(3,1))
+par(mar=c(0,3,4,3))
+boxplot(dist.res_16S_FK, xlab="", ylab="Euclidian Distance", xaxt="n",ylim=c(0,1),col=cbbPalette_alpha[2])
+par(mar=c(2,3,2,3))
+boxplot(dist.res_18S_FK, xlab="", ylab="Euclidian Distance",  xaxt="n",ylim=c(0,1),col=cbbPalette_alpha[3])
+par(mar=c(4,3,0,3))
+boxplot(dist.res_COI_FK, xlab="Elapsed Time in Days", ylab="Euclidian Distance", ylim=c(0,1),col=cbbPalette_alpha[4])
 
+```
+
+```{r pseudo autocorrelation with reference point 1 MB,fig.cap="\\label{fig:fig 9}Figure 9: Pseudo-autocorrelation of all the markers, message=FALSE, warning=FALSE, FK on top from left to right: 16S, 18S and COI. MB on the bottom, from left to right: 16S, 18S, COI, and 12S.", fig.width=4, fig.height=7}
 ############################### MB ########################
 OTUs_16S_MB<-otu_table(MB_16S_fam)
 dates_16S_MB<-ymd(sample_data(MB_16S_fam)$collection_date)
 OTUs_18S_MB<-otu_table(MB_18S_fam)
-dates_18S_MB<-ymd(sample_data(MB_18S_fam)$collection_date)
-
-a <- data.frame()
-
+dates_18S_MB<-dmy(sample_data(MB_18S_fam)$collection_date)
 OTUs_COI_MB<-otu_table(MB_COI_fam)
 dates_COI_MB<-ymd(sample_data(MB_COI_fam)$collection_date)
 OTUs_12S_MB<-otu_table(MB_12S_fam)
@@ -554,15 +625,36 @@ dist.res_COI_MB <- PA(OTUs=OTUs_COI_MB, DATES=dates_COI_MB, REFERENCE = 1, METHO
 dist.res_12S_MB <- PA(OTUs=OTUs_12S_MB, DATES=dates_12S_MB, REFERENCE = 1, METHOD="jaccard")
 
 #plot object in base R
-par(mfrow=c(1,4))
-boxplot(dist.res_16S_MB, xlab="Elapsed Time in Days", ylab="Euclidian Distance", ylim=c(0,1),col="deepskyblue3")
-boxplot(dist.res_18S_MB, xlab="Elapsed Time in Days", ylab="Euclidian Distance", ylim=c(0,1),col="deepskyblue3")
-boxplot(dist.res_COI_MB, xlab="Elapsed Time in Days", ylab="Euclidian Distance", ylim=c(0,1),col="deepskyblue3")
-boxplot(dist.res_12S_MB, xlab="Elapsed Time in Days", ylab="Euclidian Distance", ylim=c(0,1),col="deepskyblue3")
+par(mfrow=c(4,1))
+par(mar=c(0,3,4,3))
+boxplot(dist.res_16S_MB, xaxt="n",ylim=c(0,1),col=cbbPalette_alpha[2], ylab="Euclidian Distance", ylim=c(0,1))
+par(mar=c(0.5,3,4,3))
+boxplot(dist.res_18S_MB, xlab="", ylab="Euclidian Distance", ylim=c(0,1),col=cbbPalette_alpha[3],xaxt="n")
+par(mar=c(2,3,2,3))
+boxplot(dist.res_COI_MB, xlab="", ylab="Euclidian Distance", ylim=c(0,1),col=cbbPalette_alpha[4],xaxt="n")
+par(mar=c(4,3,0,3))
+boxplot(dist.res_12S_MB, xlab="Elapsed Time in Days", ylab="Euclidian Distance",at=c("NA",2,3,4,6,7,8), ylim=c(0,1),col=cbbPalette_alpha[11], xaxt="n",xaxs='i')
 
+axis(side=1, at=c(1,2,3,4,5,6,7,8,9), labels=c("49","112","56","49","70","56","77","56","56"),las=3,cex.axis=0.7)
 ```
 
-```{r total taxa pseudo-autocorrelation}
+
+```{r, eval=FALSE, include=FALSE}
+dist.res_16S_FK_sa <- OneStep(OTUs=OTUs_16S_FK, DATES=dates_16S_FK, METHOD="euclidian")
+dist.res_18S_FK_sa <- OneStep(OTUs=OTUs_18S_FK, DATES=dates_18S_FK, METHOD="euclidian")
+dist.res_COI_FK_sa <- OneStep(OTUs=OTUs_COI_FK, DATES=dates_COI_FK, METHOD="euclidian")
+
+par(mfrow=c(3,1))
+par(mar=c(0,3,4,3))
+boxplot(dist.res_16S_FK_sa, ylab="Euclidian Distance", ylim=c(0,1),col=cbbPalette_alpha[2],xlab="",xaxt="n")
+par(mar=c(2,3,2,3))
+boxplot(dist.res_18S_FK_sa, ylab="Euclidian Distance", ylim=c(0,1),col=cbbPalette_alpha[3],xlab="",xaxt="n")
+par(mar=c(4,3,0,3))
+boxplot(dist.res_COI_FK_sa, xlab="Elapsed Time in Days", ylab="Euclidian Distance",xaxt="n", ylim=c(0,1),col=cbbPalette_alpha[4],xlab="")
+axis(side=1, at=c(1,2,3,4,5,6,7,8,9), labels=c("49","112","56","49","70","56","77","56","56"),las=3,cex.axis=0.7)
+```
+
+```{r total taxa pseudo-autocorrelation, echo=FALSE, message=FALSE, warning=FALSE,fig.cap="\\label{fig:fig 10}Figure 10: Pseudo-autocorrelation of all the data, FK to the left and MB to the right. Not sure if this figure makes sense", fig.height=5, fig.width=8}
 ####### Total taxa pseudo-autocorrelation #############
 par(mfrow=c(1,2))
 OTUs_all_FK<-otu_table(FK_all_tax_tf)
@@ -575,6 +667,29 @@ dates_all_MB<-as.Date(sample_data(MB_16S_prop)$collection_date)  #
 dist.res_all_MB <- PA(OTUs=OTUs_all_MB, DATES=dates_all_MB, REFERENCE = 1, METHOD="euclidian")
 boxplot(dist.res_all_MB, xlab="Elapsed Time in Days", ylab="Euclidian Distance", ylim=c(0,0.9),col="deepskyblue3")
 
+```
+
+
+```{r simple correlations FK and MB, include=FALSE}
+tmp_cor_16S_FK <- cor.test(richness_16S_FK$richness,as.numeric(FK_16S_m2w@sam_data$TMP_C),method=c("pearson"))
+tmp_cor_18S_FK <- cor.test(richness_18S_FK$richness,as.numeric(FK_18S_m2w@sam_data$TMP_C),method=c("pearson"))
+tmp_cor_COI_FK <- cor.test(richness_COI_FK$richness,as.numeric(FK_COI_m2w@sam_data$TMP_C),method=c("pearson"))
+#tmp_cor_12S_FK <- cor.test(richness_12S_FK$richness,as.numeric(FK_12S_m2w@sam_data$TMP_C),method=c("pearson"))
+
+chl_cor_16S_FK <- cor.test(richness_16S_FK$richness,as.numeric(FK_16S_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
+chl_cor_18S_FK <- cor.test(richness_18S_FK$richness,as.numeric(FK_18S_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
+chl_cor_COI_FK <- cor.test(richness_COI_FK$richness,as.numeric(FK_COI_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
+#chl_cor_12S_FK <- cor.test(richness_12S_FK$richness,as.numeric(FK_12S_m2w@sam_data$CHL_MG_M.3),method=c("pearson"))
+
+tmp_cor_16S_MB <- cor.test(richness_16S_MB$richness,as.numeric(MB_16S_m2w@sam_data$temp),method=c("pearson"))
+tmp_cor_18S_MB <- cor.test(richness_18S_MB$richness,as.numeric(MB_18S_m2w@sam_data$temp),method=c("pearson"))
+tmp_cor_COI_MB <- cor.test(richness_COI_MB$richness,as.numeric(MB_COI_m2w@sam_data$temp),method=c("pearson"))
+tmp_cor_12S_MB <- cor.test(richness_12S_MB$richness,as.numeric(MB_12S_m2w@sam_data$temp),method=c("pearson"))
+
+chl_cor_16S_MB <- cor.test(richness_16S_MB$richness,as.numeric(MB_16S_m2w@sam_data$chlorophyll),method=c("pearson"))
+chl_cor_18S_MB <- cor.test(richness_18S_MB$richness,as.numeric(MB_18S_m2w@sam_data$chlorophyll),method=c("pearson"))
+chl_cor_COI_MB <- cor.test(richness_COI_MB$richness,as.numeric(MB_COI_m2w@sam_data$chlorophyll),method=c("pearson"))
+chl_cor_12S_MB <- cor.test(richness_12S_MB$richness,as.numeric(MB_12S_m2w@sam_data$chlorophyll),method=c("pearson"))
 ```
 
 

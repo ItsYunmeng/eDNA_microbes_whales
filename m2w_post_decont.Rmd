@@ -6,7 +6,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 #knitr::opts_chunk$set(include = FALSE)
-library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq);  library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro);library(ComplexHeatmap); library(circlize); library(colorspace); library(GetoptLong)
+library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq); library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro);library(ComplexHeatmap); library(circlize); library(colorspace); library(GetoptLong);library(WGCNA); library(matrixStats);library(Hmisc); library(splines);library(foreach);library(doParallel);library(fastcluster) ;library(dynamicTreeCut);library(survival)
 ```
 
 ```{r, include=FALSE}

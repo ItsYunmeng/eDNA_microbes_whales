@@ -1,6 +1,6 @@
 ---
 title: "Tracking ecosystem shifts, from microbes to mammals, with environmental DNA"
-author: "Anni Djurhuus"
+author: "Djurhuus et al."
 output: html_document
 ---
 
@@ -26,14 +26,13 @@ pal <- colorRampPalette(brewer.pal(11, "RdYlGn"))(50)
 ```
 
 ```{r read in MB data undergone decontamination, include=FALSE}
-MB_16S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/16S/MB_16S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/16S/MB_16S_tax_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/16S/MB_16S_sam_table.csv", row.names = 1)))
+MB_16S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_tax_table.csv", row.names = 1))),sample_data(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_sam_table.csv", row.names = 1)))
 
-MB_18S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/18S/MB_18S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/18S/MB_18S_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/18S/MB_18S_sam_table.csv", row.names = 1)))
+MB_18S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_sam_table.csv", row.names = 1)))
 
-MB_COI_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/COI/MB_COI_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/COI/MB_COI_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/COI/MB_COI_sam_table.csv", row.names = 1)))
+MB_COI_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_sam_table.csv", row.names = 1)))
 
-MB_12S_m2w <- merge_phyloseq(otu_table(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/12S/MB_12S_otu_table.csv", row.names = 1, check.names = FALSE), taxa_are_rows = TRUE), tax_table(as.matrix(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/12S/MB_12S_taxa_table.csv", row.names = 1))), sample_data(read.csv(file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/12S/MB_12S_sam_data.csv",row.names = 1)))
-#a<-data.frame(MB_12S_m2w@sam_data)
+MB_12S_m2w <- merge_phyloseq(otu_table(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_otu_table.csv", row.names = 1, check.names = FALSE), taxa_are_rows = TRUE), tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_taxa_table.csv", row.names = 1))), sample_data(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_sam_data.csv",row.names = 1)))
 ```
 
 ```{r functions for splitting species, adding taxonomy to highest level available and pseudoautocorrelation, include=FALSE,message=FALSE, warning=FALSE}
@@ -202,7 +201,7 @@ taxa_names(MB_16S_fam) <- paste(MB_16S_fam@tax_table[,9])
 MB_16S_prop = transform_sample_counts(MB_16S_fam,function(x) x / sum(x))
 MB_16S_prop2 <- sweep(MB_16S_prop@otu_table,1,rowMaxs(MB_16S_prop@otu_table),"/")
 
-#write.csv(as.data.frame(MB_16S_prop@tax_table), "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_16S_tax_table.csv")  #is this the best way to save biom files?
+#write.csv(as.data.frame(MB_16S_prop@tax_table), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_tax_table.csv")  #is this the best way to save biom files?
 
 tax_table(MB_18S_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_18S_fam))))))
 MB_18S_fam <- add_taxonomy_column(MB_18S_fam)
@@ -213,7 +212,7 @@ taxa_names(MB_18S_fam) <- paste(MB_18S_fam@tax_table[,9])
 MB_18S_prop = transform_sample_counts(MB_18S_fam,function(x) x / sum(x))
 MB_18S_prop2 <- sweep(MB_18S_prop@otu_table,1,rowMaxs(MB_18S_prop@otu_table),"/")
 
-#write.csv(as.data.frame(MB_18S_prop@tax_table), "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_18S_tax_table.csv")  #is this the best way to save biom files?
+#write.csv(as.data.frame(MB_18S_prop@tax_table), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_tax_table.csv")  #is this the best way to save biom files?
 
 tax_table(MB_COI_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_COI_fam))))))
 MB_COI_fam <- add_taxonomy_column(MB_COI_fam)
@@ -224,7 +223,7 @@ taxa_names(MB_COI_fam) <- paste(MB_COI_fam@tax_table[,9])
 MB_COI_prop = transform_sample_counts(MB_COI_fam,function(x) x / sum(x))
 MB_COI_prop2 <- sweep(MB_COI_prop@otu_table,1,rowMaxs(MB_COI_prop@otu_table),"/")
 
-#write.csv(as.data.frame(MB_COI_prop@tax_table), "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_COI_tax_table.csv")  #is this the best way to save biom files?
+#write.csv(as.data.frame(MB_COI_prop@tax_table), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_tax_table.csv")  #is this the best way to save biom files?
 
 tax_table(MB_12S_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_12S_fam))))))
 MB_12S_fam <- add_taxonomy_column(MB_12S_fam) # Add family and order assignments 
@@ -234,7 +233,7 @@ taxa_names(MB_12S_fam) <- paste(MB_12S_fam@tax_table[,9])
 MB_12S_prop = transform_sample_counts(MB_12S_fam,function(x) x / sum(x))
 MB_12S_prop2 <- sweep(MB_12S_prop@otu_table,1,rowMaxs(MB_12S_prop@otu_table),"/")
 
-#write.csv(as.data.frame(MB_12S_prop@tax_table), "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_12S_tax_table.csv")
+#write.csv(as.data.frame(MB_12S_prop@tax_table), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_tax_table.csv")
 #Merge all data from MB not relative abundance
 MB_all_tax_ps <- merge_phyloseq(MB_COI_fam@otu_table, MB_16S_fam@otu_table,
                                 MB_12S_fam@otu_table, MB_18S_fam@otu_table, MB_18S_fam@sam_data)
@@ -242,40 +241,29 @@ MB_all_tax_ps <- merge_phyloseq(MB_COI_fam@otu_table, MB_16S_fam@otu_table,
 #Merge all OTU and taxa data from MB relative abundance. ps stands for phyloseq object, ts is for transformed
 MB_all_tax_ps_ts <- merge_phyloseq(otu_table(MB_COI_prop2,taxa_are_rows = T),otu_table(MB_16S_prop2,taxa_are_rows = T), otu_table(MB_12S_prop2,taxa_are_rows = TRUE),otu_table(MB_18S_prop2,taxa_are_rows = TRUE), MB_18S_fam@sam_data) #merge data on previously transformed data.
 
-# merge samples for fun... 
+# merge replicates for fun... 
 MB_all_tax_ps_ts_merge <- merge_samples(MB_all_tax_ps_ts,"collection_date",fun=mean) #merge samples
-MB_all_tax_ps_ts_merge_df <- data.frame(MB_all_tax_ps_ts_merge@otu_table)
-MB_all_tax_ps_ts_merge_df$collection_date <- row.names(MB_all_tax_ps_ts_merge_df)
 # filter out bad taxa 
-badTaxa_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/MB_badtaxa.csv", header=FALSE)
-badTaxa_MB <- badTaxa_MB[[1]]
+badTaxa_MB <- read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/MB_badtaxa.csv", header=FALSE)
+badTaxa_MB <- badTaxa_MB[[1]] # make bad taxa into list
+goodTaxa_MB <- setdiff(taxa_names(MB_all_tax_ps_ts), badTaxa_MB) #subset good taxa
+MB_all_tax_ps_rel = prune_taxa(goodTaxa_MB,MB_all_tax_ps_ts) #filter good taxa from all taxa list from all data (not merged replicates)
+goodTaxa_MB_merge <- setdiff(taxa_names(MB_all_tax_ps_ts_merge), badTaxa_MB) #subset good taxa from merged replicates
+MB_all_tax_ps_ts_merge = prune_taxa(goodTaxa_MB_merge,MB_all_tax_ps_ts_merge) # filter out good taxa from merged replicates
+MB_merged_otu <- t(as.matrix(MB_all_tax_ps_ts_merge@otu_table)) #transpose merged otu table
+#Divide all rows (taxa) with row max on transposed data
+MB_merged_otu_table <- sweep(MB_merged_otu,1,rowMaxs(MB_merged_otu),"/") 
+MB_all_merge <- t(as.data.frame(MB_merged_otu_table)) #create non transposed otu table
 
-goodTaxa_MB <- setdiff(taxa_names(MB_all_tax_ps_ts), badTaxa_MB)
-
-MB_all_tax_ps_rel = prune_taxa(goodTaxa_MB,MB_all_tax_ps_ts)
-goodTaxa_MB_merge <- setdiff(taxa_names(MB_all_tax_ps_ts_merge), badTaxa_MB)
-MB_all_tax_ps_ts_merge = prune_taxa(goodTaxa_MB_merge,MB_all_tax_ps_ts_merge)
-MB_all_tax_ps_ts_merge = prune_taxa(taxa_sums(MB_all_tax_ps_ts_merge) > 0, MB_all_tax_ps_ts_merge) 
-MB_merged_otu <- t(as.matrix(MB_all_tax_ps_ts_merge@otu_table))
-MB_merged_otu_table <- sweep(MB_merged_otu,1,rowMaxs(MB_merged_otu),"/")
-
-MB_all_merge <- data.frame(MB_all_tax_ps_ts_merge@otu_table)
-MB_all_merge$collection_date <- row.names(MB_all_merge)
-
-MB_all_tax_ps_rel = prune_taxa(taxa_sums(MB_all_tax_ps_rel) > 0, MB_all_tax_ps_rel) 
-#MB_all_tax_ps_rel = transform_sample_counts(MB_all_tax_ps_rel,function(x) x / sum(x))
-#saveRDS(MB_all_tax_ps_rel, "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_all_tax_ps_rel.Rdata")  
+#saveRDS(MB_all_tax_ps_rel, "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_tax_ps_rel.Rdata")  
 MB_all_taxa_table <- data.frame(MB_all_tax_ps_rel@tax_table)
 MB_all_otu_table <- as.matrix(MB_all_tax_ps_rel@otu_table)
 MB_all_otu_table <- sweep(MB_all_otu_table,1,rowMaxs(MB_all_otu_table),"/")
 
 MB_all_tax_ps_rel <- merge_phyloseq(otu_table(MB_all_otu_table, taxa_are_rows = TRUE), MB_all_tax_ps_rel@sam_data)
 
-#write.csv(MB_all_otu_table, "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_all_otu_table.csv")  
-#write.csv(MB_all_taxa_table, "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_all_taxa_table.csv")
-saveRDS(MB_all_otu_table, "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_all_otu_table.Rdata")  
-saveRDS(MB_merged_otu_table, "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_merged_otu_table.Rdata")  
-
+saveRDS(MB_all_otu_table, "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_otu_table.Rdata")  
+saveRDS(MB_merged_otu_table, "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_merged_otu_table.Rdata")  
 ```
 
 ```{r filter by correlations, include=FALSE, echo =FALSE}
@@ -293,31 +281,28 @@ Col2RN<-function(df, x){row.names(df)<-df[,x]; df<-df[-x]; return(df)} #convert 
 otus<-MB_merged_otu_table
   
   #filter by sd or some other measure of variance
-  otus <- otus[specnumber(otus) > 1 , ]  #must occur in at least 2 time points, with zero abundance being a real data point in this case 
+otus <- otus[specnumber(otus) > 1 , ]  #must occur in at least 2 time points, with zero abundance being a real data point in this case 
 
-  
-#CORRELATION Matrix
+#compute CORRELATION after transposing dataset
 corMB <- cor(t(otus), method = "kendall")
-  corMB[lower.tri(corMB, T)] <- NA
-  sum(abs(corMB)>0.7, na.rm=T) / length(corMB)  #using Kendall alpha value of tau = 0.62 (by simulation)
-  
-  #reshape
-  corMB <- melt(corMB)%>%
-    filter(!is.na(value))%>%
-    filter(value > 0.7)%>%
-    arrange(desc(value))
-    head(corMB)
-    length(unique(corMB$Var1))
+
+#save as dataframe and reshape; useful for plotting
+corMB[lower.tri(corMB, T)] <- NA
+corMB <- melt(corMB)%>%
+  filter(!is.na(value))%>%
+  filter(value>=0.7)
+
+length(unique(unlist(corMB[,1:2])))  #339 unique taxa
     
     #save(corMB, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/analysis/MBKendall.Rdata")
     
     #sanity check plot
     #plot(otus["f:Paracalanidae",]~otus["f:Thalassiosiraceae",])
    
-unique_kend_taxa <- as.character(unique(corMB$Var1))
+unique_kend_taxa <- as.character(unique(unlist(corMB[,1:2])))
 MB_merge_filt = prune_taxa(unique_kend_taxa,otu_table(MB_merged_otu_table, taxa_are_rows = TRUE))
+MB_all_filt = prune_taxa(unique_kend_taxa,otu_table(MB_all_tax_ps_rel, taxa_are_rows = TRUE))
 ```
-
 
 ```{r network analysis, include=FALSE,message=FALSE, warning=FALSE}
 options(stringsAsFactors = FALSE);
@@ -342,15 +327,18 @@ if (!gsg$allOK)
   datExpr0_MB = datExpr0_MB[gsg$goodSamples, gsg$goodGenes]
 }
 
+#make tree of samples to visualize ant obvious outliers
 sampleTree_MB = hclust(tau.dist(datExpr0_MB));
 sizeGrWindow(12,9)
 par(cex = 0.6);
 par(mar = c(0,4,2,0))
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/net_dendro_tau.pdf")
 plot(sampleTree_MB, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5, 
      cex.axis = 1.5, cex.main = 2)
+dev.off()
 
 # Plot a line to show the cut
-abline(h = 15, col = "red");
+#abline(h = 15, col = "red");
 # Determine cluster under the line
 clust_MB = cutreeStatic(sampleTree_MB, cutHeight = 15, minSize = 8)
 table(clust_MB)
@@ -380,15 +368,15 @@ rownames(allTraits_MB) = Samples_MB
 datTraits_MB = allTraits_MB[,-c(2)]
 collectGarbage();
 
-
 sampleTree2_MB = hclust(tau.dist(datExpr_MB), method = "average")
 # Convert traits to a color representation: white means low, red means high, grey means missing entry
 traitColors_MB = numbers2colors(datTraits_MB, signed = FALSE);
 # Plot the sample dendrogram and the colors underneath.
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/net_dendro_tau_w_env.pdf")
 plotDendroAndColors(sampleTree2_MB, traitColors_MB,
                     groupLabels = names(datTraits_MB), 
                     main = "Sample dendrogram and trait heatmap")
-
+dev.off()
 #STEP 2
 allowWGCNAThreads()
 
@@ -398,7 +386,8 @@ powers = c(c(1:10), seq(from = 12, to=20, by=2))
 sft_MB = pickSoftThreshold(datExpr_MB, powerVector = powers, verbose = 5)
 # Plot the results:
 
-sizeGrWindow(9, 5)
+#sizeGrWindow(9, 5)
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/pick_soft_threshold.pdf")
 par(mfrow = c(1,2));
 cex1 = 0.9;
 # Scale-free topology fit index as a function of the soft-thresholding power
@@ -408,17 +397,17 @@ plot(sft_MB$fitIndices[,1], -sign(sft_MB$fitIndices[,3])*sft_MB$fitIndices[,2],
 text(sft_MB$fitIndices[,1], -sign(sft_MB$fitIndices[,3])*sft_MB$fitIndices[,2],
      labels=powers,cex=cex1,col="red");
 # this line corresponds to using an R^2 cut-off of h
-abline(h=0.90,col="red")
+abline(h=0.60,col="red")
  # Mean connectivity as a function of the soft-thresholding power
 plot(sft_MB$fitIndices[,1], sft_MB$fitIndices[,5],
      xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
      main = paste("Mean connectivity"))
 text(sft_MB$fitIndices[,1], sft_MB$fitIndices[,5], labels=powers, cex=cex1,col="red")
-
+dev.off()
 
 #create modules
 #Choose power based on what the soft threshold results look like, ours are showing a scale free topography at around 8. See figs above.
-net_MB = blockwiseModules(datExpr_MB, power = 5,
+net_MB = blockwiseModules(datExpr_MB, power = 7,
                        TOMType = "unsigned", minModuleSize = 30,
                        reassignThreshold = 0, mergeCutHeight = 0.30,
                        numericLabels = TRUE, corType ="pearson",pamRespectsDendro = FALSE,
@@ -432,12 +421,12 @@ sizeGrWindow(12, 9)
 mergedColors_MB = labels2colors(net_MB$colors)
 mergedColors_MB = gsub("yellow","#ffc425", gsub("blue","#00aedb", gsub("red", "#d11141", gsub("green","#00b159",gsub("brown","#f37735",gsub("turquoise","#8c8c8c",mergedColors_MB))))))
 #Plot the dendrogram and the module colors underneath
-#pdf(file="/Users/anni_djurhuus/Documents/Projects/MBON/m2w/figs/modules_final_taxa.pdf",height=8,width=10)
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/taxa_dendro_modules.pdf")
 plotDendroAndColors(net_MB$dendrograms[[1]], mergedColors_MB[net_MB$blockGenes[[1]]],
                     "Module colors",
                     dendroLabels = FALSE, hang = 0.03,
                     addGuide = TRUE, guideHang = 0.05)
-#dev.off()
+dev.off()
 
 moduleLabels_MB = net_MB$colors
 moduleColors_MB = labels2colors(net_MB$colors)
@@ -451,7 +440,7 @@ nSamples_MB = nrow(datExpr_MB);
 # Recalculate MEs with color labels
 MEs0_MB = moduleEigengenes(datExpr_MB, moduleColors_MB)$eigengenes
 MEs_MB = orderMEs(MEs0_MB)
-#colnames(MEs_MB) = c("blue","dark grey","orange","green","yellow", "grey")
+colnames(MEs_MB) = c("red","blue", "dark grey","orange","green","yellow", "grey")
 #colnames(MEs_MB) = c("dark grey","black","blue","green","brown","red","yellow","grey")
 
 moduleTraitCor_MB = cor(MEs_MB, datTraits_MB, use = "p");
@@ -463,7 +452,7 @@ textMatrix_MB =  paste(signif(moduleTraitCor_MB, 2), "\n(",
                     signif(moduleTraitPvalue_MB, 1), ")", sep = "");
 dim(textMatrix_MB) = dim(moduleTraitCor_MB)
 # Display the correlation values within a heatmap plot
-#pdf(file="/Users/anni_djurhuus/Documents/Projects/MBON/m2w/figs/trait_heatmap_rel_abund_no_badtaxa.pdf",height=8,width=10)
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/module_cor_envir.pdf")
 par(mar = c(6, 8.5, 3, 3));
 labeledHeatmap(Matrix = moduleTraitCor_MB,
                xLabels = names(datTraits_MB),
@@ -478,13 +467,13 @@ labeledHeatmap(Matrix = moduleTraitCor_MB,
                naColor = "grey",
                zlim = c(-1,1),
                main = paste("Module-trait relationships"))
-#dev.off()
+dev.off()
 
 
 #STEP 5
-modules = c("#00b159", "#ffc425", "#00aedb","#f37735","#8c8c8c");
+modules = c("#00b159", "#ffc425", "#00aedb","#f37735","#8c8c8c", "#d11141");
 # Select module probes
-probes = names(datExpr_MB)
+probes = colnames(datExpr_MB)
 inModule = is.finite(match(moduleColors_MB, modules));
 modProbes = probes[inModule];
 #modGenes = annot$gene_symbol[match(modProbes, annot$substanceBXH)];
@@ -492,12 +481,6 @@ modProbes = probes[inModule];
 modTOM = TOM[inModule, inModule];
 dimnames(modTOM) = list(modProbes, modProbes)
 
-colorh1= moduleColors_MB
-cmd1=cmdscale(as.dist(modTOM),2)
-sizeGrWindow(7, 6)
-par(mfrow=c(1,1))
-plot(cmd1, col=as.character(moduleColors_MB), main="MDS plot",
-     xlab="Scaling Dimension 1", ylab="Scaling Dimension 2")
 # Export the network into edge and node list files Cytoscape can read
 cyt = exportNetworkToCytoscape(modTOM,
                                edgeFile = paste("CytoscapeInput-edges-", paste(modules, collapse="-"), ".txt", sep=""),
@@ -507,21 +490,26 @@ cyt = exportNetworkToCytoscape(modTOM,
                                nodeNames = modProbes,
                                nodeAttr = moduleColors_MB[inModule])
 
-write.csv(cyt$edgeData, file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/network_data/MB_edge_final_taxa.csv")
-write.csv(cyt$nodeData, file = "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/network_data/MB_node_final_taxa.csv")
+write.csv(cyt$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge.csv")
+write.csv(cyt$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node.csv")
+```
+
+
+```{r network traits based on PCA,echo=FALSE,message=FALSE, warning=FALSE}
+
+
 
 ```
 
-```{r pseudo autocorrelation of all module MB,echo=FALSE,message=FALSE, warning=FALSE}
-#saveRDS(MB_all_tax_ps_rel, "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/MB_all_tax_ps_rel.Rdata")  
 
-module_taxa <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/module_taxa.csv", header=TRUE)
-yel_MB <- module_taxa[[1]]
-red_MB <- module_taxa[[2]]
-blue_MB <- module_taxa[[3]]
-green_MB <- module_taxa[[4]]
-dg_MB <- module_taxa[[5]]
-black_MB <- module_taxa[[7]]
+```{r pseudo autocorrelation of all module MB,echo=FALSE,message=FALSE, warning=FALSE}
+datExpr_MB <- as.data.frame(datExpr_MB)
+blue_MB <- names(datExpr_MB)[moduleColors_MB=="#00aedb"] #blue
+dg_MB <- names(datExpr_MB)[moduleColors_MB=="#8c8c8c"]#dark grey
+orange_MB <- names(datExpr_MB)[moduleColors_MB=="#f37735"] #orange
+green_MB <- names(datExpr_MB)[moduleColors_MB=="#00b159"] #green
+yel_MB <-names(datExpr_MB)[moduleColors_MB=="#ffc425"] # yellow
+red_MB <- names(datExpr_MB)[moduleColors_MB=="#d11141"] #red
 
 #filter out desired color module
 MB_taxa_yel = prune_taxa(yel_MB,MB_all_tax_ps_rel)
@@ -549,7 +537,6 @@ dist.blue_sa_MB <- OneStep(OTUs=blue_otu_MB, DATES=dates_MB, METHOD="jaccard")
 dist.green_sa_MB <- OneStep(OTUs=green_otu_MB, DATES=dates_MB, METHOD="jaccard")
 dist.dg_sa_MB <- OneStep(OTUs=dg_otu_MB, DATES=dates_MB, METHOD="jaccard")
 dist.black_sa_MB <- OneStep(OTUs=black_otu_MB, DATES=dates_MB, METHOD="jaccard")
-
 
 pdf(file="/Users/anni_djurhuus/Documents/Projects/MBON/m2w/figs/yel_black_PA.pdf",height=8,width=8)
 par(mfcol=c(2,1))
@@ -779,7 +766,7 @@ top_taxa_merge_MB <- prune_taxa(names(sort(taxa_sums(MB_all_tax_ps_ts_merge),
 cor_MB <- as.matrix(top_taxa_merge_MB@otu_table)
 correlation_MB <-cor(cor_MB)
 res2_MB<-rcorr(cor_MB,type="spearman")
-#saveRDS(res2_MB, "/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/post_decont/MB/taxa_cor_MB.Rdata")  
+#saveRDS(res2_MB, "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/taxa_cor_MB.Rdata")  
 corrplot(res2_MB$r, type="lower", order="hclust", 
          p.mat = res2_MB$P, sig.level = 0.05, tl.srt=45,tl.col="black", insig = "blank",tl.cex=0.4,diag=FALSE)
 ```

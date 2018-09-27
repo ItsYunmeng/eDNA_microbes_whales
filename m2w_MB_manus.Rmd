@@ -6,7 +6,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 #knitr::opts_chunk$set(include = FALSE)
-library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq); library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro);library(ComplexHeatmap); library(circlize); library(colorspace); library(GetoptLong);library(WGCNA); library(matrixStats);library(Hmisc); library(splines);library(foreach);library(doParallel);library(fastcluster); library(dynamicTreeCut); library(survival); library(WGCNA); library(cluster); library(beepr);library(bioDist); library(FactoMineR)
+library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq); library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro);library(ComplexHeatmap); library(circlize); library(colorspace); library(GetoptLong);library(WGCNA); library(matrixStats);library(Hmisc); library(splines);library(foreach);library(doParallel);library(fastcluster); library(dynamicTreeCut); library(survival); library(WGCNA); library(cluster); library(beepr);library(bioDist); library(FactoMineR);library(MASS); library(ggfortify); library(factoextra)
 ```
 
 ```{r, include=FALSE}
@@ -304,7 +304,8 @@ length(unique(unlist(corMB[,1:2])))  #339 unique taxa
 unique_kend_taxa <- as.character(unique(unlist(corMB[,1:2])))
 MB_merge_filt = prune_taxa(unique_kend_taxa,otu_table(MB_merged_otu_table, taxa_are_rows = TRUE))
 MB_all_filt = prune_taxa(unique_kend_taxa,otu_table(MB_all_tax_ps_rel, taxa_are_rows = TRUE))
-#a <- data.frame(MB_merge_filt@.Data)
+#write.csv(as.data.frame(MB_all_filt@.Data), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_filt.csv")
+#write.csv(as.data.frame(MB_merge_filt@.Data), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_merge_filt.csv")
 ```
 
 ###Network analysis
@@ -353,7 +354,7 @@ nGenes_MB = ncol(datExpr_MB)
 nSamples_MB = nrow(datExpr_MB)
 
 #load trait data
-traitData_MB = read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/google_drive/data/MEGAN6/metadata/metadata_MB_merged_sam.csv")
+traitData_MB = read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/metadata_MB_merged_sam.csv")
 #dim(traitData_MB)
 #names(traitData_MB)
 
@@ -414,7 +415,7 @@ text(sft_MB$fitIndices[,1], sft_MB$fitIndices[,5], labels=powers, cex=cex1,col="
 net_MB = blockwiseModules(datExpr_MB, power = 7,
                        TOMType = "unsigned", minModuleSize = 30,
                        reassignThreshold = 0, mergeCutHeight = 0.30,
-                       numericLabels = TRUE, corType ="spearman",pamRespectsDendro = FALSE,
+                       numericLabels = TRUE, corType ="pearson",pamRespectsDendro = FALSE,
                        saveTOMs = TRUE,
                        saveTOMFileBase = "MB_TOM", 
                        verbose = 3)
@@ -450,7 +451,7 @@ colnames(MEs_MB) = c("red","blue", "dark grey","orange","green","yellow", "grey"
 moduleTraitCor_MB = cor(MEs_MB, datTraits_MB, use = "p");
 moduleTraitPvalue_MB = corPvalueStudent(moduleTraitCor_MB, nSamples_MB);
 
-sizeGrWindow(12,8)
+#sizeGrWindow(12,8)
 # Will display correlations and their p-values
 textMatrix_MB =  paste(signif(moduleTraitCor_MB, 2), "\n(",
                     signif(moduleTraitPvalue_MB, 1), ")", sep = "");
@@ -500,8 +501,53 @@ write.csv(cyt$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/da
 ```
 
 ```{r network traits based on PCA,echo=FALSE,message=FALSE, warning=FALSE}
+meta<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/m2w_metadata_MB.csv")
+#names(meta)
+DATES<-str_split(meta$SAMPLING_date_time, " ", simplify=T)[,2]
+meta<-meta[,c(18, 47,48, 51,52)]
+standard<-decostand(meta, method="max") #standardize variables
 
+	#PCA
+envir.PCA <- princomp(standard)
+summary(envir.PCA)
+loadings(envir.PCA)
+Loadings <- as.data.frame(envir.PCA$loadings[,1:2])
+fviz_eig(envir.PCA)
+#fviz_pca_ind(envir.PCA)
+  
+#plotting w ggfortify; see https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html
+#pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/envirPCA.pdf")
+autoplot(envir.PCA,
+         loadings = T, loadings.label = F, loadings.label.size = 4)+
+  theme_minimal()+
+  annotate("text", x = -0.2, y=0.28, label = "Upwelling", color = "red")+
+  annotate("text", x = 0.25, y=0.21, label = "Nitrate", color = "red")+
+  annotate("text", x = -0.05, y= -0.07, label = "Temperature", color = "red")+
+  annotate("text", x = 0.032, y= -0.01, label = "Salinity", color = "red")+
+  annotate("text", x = -0.06, y= -0.01, label = "Oxygen", color = "red")
+#dev.off()
+	
 
+#moduleTraitCor_MB = cor(MEs_MB, datTraits_MB, use = "p");
+#moduleTraitPvalue_MB = corPvalueStudent(moduleTraitCor_MB, nSamples_MB);
+
+# Will display correlations and their p-values
+#textMatrix_MB =  paste(signif(moduleTraitCor_MB, 2), "\n(",
+#                    signif(moduleTraitPvalue_MB, 1), ")", sep = "");
+
+#labeledHeatmap(Matrix = moduleTraitCor_MB,
+#               xLabels = names(datTraits_MB),
+#               yLabels = names(MEs_MB),
+#               yColorLabels = TRUE,
+#               ySymbols = names(MEs_MB),
+#               colorLabels = FALSE,
+#               colors = blueWhiteRed(50),
+#               textMatrix = textMatrix_MB,
+#               setStdMargins = FALSE,
+#               cex.text = 0.5,
+#               naColor = "grey",
+#               zlim = c(-1,1),
+#               main = paste("Module-trait relationships"))
 
 ```
 ###Pseudoautocorrelation of modules

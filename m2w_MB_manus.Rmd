@@ -6,7 +6,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 #knitr::opts_chunk$set(include = FALSE)
-library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq); library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro);library(ComplexHeatmap); library(circlize); library(colorspace); library(GetoptLong);library(WGCNA); library(matrixStats);library(Hmisc); library(splines);library(foreach);library(doParallel);library(fastcluster); library(dynamicTreeCut); library(survival); library(WGCNA); library(cluster); library(beepr);library(bioDist); library(FactoMineR);library(MASS); library(ggfortify); library(factoextra)
+library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq); library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro);library(ComplexHeatmap); library(circlize); library(colorspace); library(GetoptLong);library(WGCNA); library(matrixStats);library(Hmisc); library(splines);library(foreach);library(doParallel);library(fastcluster); library(dynamicTreeCut); library(survival); library(WGCNA); library(cluster); library(beepr);library(bioDist); library(FactoMineR);library(MASS); library(ggfortify); library(factoextra); library(qpcR);library(mixOmics); library(flashClust); library(ggridges)
 ```
 
 ```{r, include=FALSE}
@@ -186,7 +186,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 ```
 
-```{r transform sample abundance to proportion and make one dataframe per location, include=FALSE}
+```{r transform sample abundance to proportion and make one dataframe per location, include=FALSE, echo=FALSE, warning=FALSE}
 MB_16S_fam <- tax_glom(MB_16S_m2w, "Rank5")
 MB_18S_fam <- tax_glom(MB_18S_m2w, "Rank5")
 MB_COI_fam <- tax_glom(MB_COI_m2w, "Rank5")
@@ -246,7 +246,9 @@ MB_all_tax_ps <- merge_phyloseq(MB_COI_fam@otu_table, MB_16S_fam@otu_table,
 MB_all_tax_ps_ts <- merge_phyloseq(otu_table(MB_COI_prop2,taxa_are_rows = T),otu_table(MB_16S_prop2,taxa_are_rows = T), otu_table(MB_12S_prop2,taxa_are_rows = TRUE),otu_table(MB_18S_prop2,taxa_are_rows = TRUE), MB_18S_fam@sam_data) #merge data on previously transformed data.
 
 # merge replicates for fun... 
-MB_all_tax_ps_ts_merge <- merge_samples(MB_all_tax_ps_ts,"collection_date",fun=mean) #merge samples
+MB_all_tax_ps_ts_merge <- merge_samples(MB_all_tax_ps_ts,"SAMPLING_date",fun=mean) #merge samples
+
+#a <- MB_all_tax_ps_ts@sam_data
 # filter out bad taxa 
 badTaxa_MB <- read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/MB_badtaxa.csv", header=FALSE)
 badTaxa_MB <- badTaxa_MB[[1]] # make bad taxa into list
@@ -299,20 +301,22 @@ length(unique(unlist(corMB[,1:2])))  #339 unique taxa
     #save(corMB, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/analysis/MBKendall.Rdata")
     
     #sanity check plot
-    #plot(otus["f:Paracalanidae",]~otus["f:Thalassiosiraceae",])
+#    plot(otus["f:Paracalanidae",]~otus["f:Thalassiosiraceae",])
+#    plot(otus["f:Carangidae",]~otus["f:Otariidae",])
    
 unique_kend_taxa <- as.character(unique(unlist(corMB[,1:2])))
 MB_merge_filt = prune_taxa(unique_kend_taxa,otu_table(MB_merged_otu_table, taxa_are_rows = TRUE))
+#a <- MB_merge_filt@.Data
 MB_all_filt = prune_taxa(unique_kend_taxa,otu_table(MB_all_tax_ps_rel, taxa_are_rows = TRUE))
-#write.csv(as.data.frame(MB_all_filt@.Data), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_filt.csv")
-#write.csv(as.data.frame(MB_merge_filt@.Data), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_merge_filt.csv")
+write.csv(as.data.frame(MB_all_filt@.Data), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_filt.csv")
+write.csv(as.data.frame(MB_merge_filt@.Data), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_merge_filt.csv")
 ```
 
 ###Network analysis
 ```{r network analysis, echo=FALSE, message=FALSE, warning=FALSE}
 options(stringsAsFactors = FALSE);
-MB_Data <- as.data.frame(MB_merge_filt)
-#dim(MB_Data);
+MB_Data <- as.matrix(MB_merge_filt)
+dim(MB_Data);
 #names(MB_Data);
 datExpr0_MB = t(MB_Data) #transpose
 
@@ -332,61 +336,50 @@ if (!gsg$allOK)
   datExpr0_MB = datExpr0_MB[gsg$goodSamples, gsg$goodGenes]
 }
 
-#make tree of samples to visualize ant obvious outliers
-sampleTree_MB = hclust(tau.dist(datExpr0_MB));
+datExpr_MB <- datExpr0_MB
+#make tree of samples to visualize any obvious outliers
+sampleTree_MB = hclust(tau.dist(datExpr_MB))
 #sizeGrWindow(12,9)
 par(cex = 0.6);
 #par(mar = c(0,4,2,0))
 #pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/net_dendro_tau.pdf")
-plot(sampleTree_MB, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5, 
-     cex.axis = 1.5, cex.main = 2)
+plot(sampleTree_MB, main="",sub="", xlab="", cex=0.7,cex.lab = 0.8, cex.axis = 0.7)
 #dev.off()
 
-# Plot a line to show the cut
-#abline(h = 15, col = "red");
-# Determine cluster under the line
-clust_MB = cutreeStatic(sampleTree_MB, cutHeight = 15, minSize = 8)
-table(clust_MB)
-# clust 1 contains the samples we want to keep.
-keepSamples = (clust_MB==1)
-datExpr_MB = datExpr0_MB[keepSamples, ]
 nGenes_MB = ncol(datExpr_MB)
 nSamples_MB = nrow(datExpr_MB)
 
 #load trait data
-traitData_MB = read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/metadata_MB_merged_sam.csv")
+traitData_MB = read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/metadata_MB_merged_sam.csv")
 #dim(traitData_MB)
 #names(traitData_MB)
 
 # remove columns that hold information we do not need.
-allTraits_MB = traitData_MB[, -c(1:17,19:20,21:32,34:46,50,53:64)];
-dim(allTraits_MB)
-names(allTraits_MB)
-
-meta = as.data.frame(allTraits_MB)
-meta = meta[, -c(2)]
-
+meta = as.data.frame(traitData_MB[, c(18,47,48,49,51,52)])
+#meta = allTraits_MB[, -c(1)]
+#datExpr_MB <- t(datExpr_MB)
 # Form a data frame analogous to expression data that will hold the traits.
 Samples_MB = rownames(datExpr_MB)
-traitRows_MB = match(Samples_MB, allTraits_MB$SAMPLING_date);
-rownames(allTraits_MB) = Samples_MB
-datTraits_MB = allTraits_MB[,-c(2)]
+traitRows_MB = match(Samples_MB, traitData_MB$collection_date);
+rownames(meta) = Samples_MB
+datTraits_MB = meta
 collectGarbage();
 
 sampleTree2_MB = hclust(tau.dist(datExpr_MB), method = "average")
 # Convert traits to a color representation: white means low, red means high, grey means missing entry
-traitColors_MB = numbers2colors(datTraits_MB, signed = FALSE);
+traitColors_MB = numbers2colors(scale(datTraits_MB), signed = FALSE);
 # Plot the sample dendrogram and the colors underneath.
 #pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/net_dendro_tau_w_env.pdf")
 plotDendroAndColors(sampleTree2_MB, traitColors_MB,
                     groupLabels = names(datTraits_MB), 
                     main = "Sample dendrogram and trait heatmap")
 #dev.off()
+
 #STEP 2
 allowWGCNAThreads()
 
 # Choose a set of soft-thresholding powers
-powers = c(c(1:10), seq(from = 12, to=20, by=2))
+powers = c(c(1:10), seq(from = 12, to=50, by=2))
 # Call the network topology analysis function
 sft_MB = pickSoftThreshold(datExpr_MB, powerVector = powers, verbose = 5)
 # Plot the results:
@@ -394,7 +387,7 @@ sft_MB = pickSoftThreshold(datExpr_MB, powerVector = powers, verbose = 5)
 #sizeGrWindow(9, 5)
 #pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/pick_soft_threshold.pdf")
 par(mfrow = c(1,2));
-cex1 = 0.9;
+cex1 = 0.8;
 # Scale-free topology fit index as a function of the soft-thresholding power
 plot(sft_MB$fitIndices[,1], -sign(sft_MB$fitIndices[,3])*sft_MB$fitIndices[,2],
      xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
@@ -402,8 +395,8 @@ plot(sft_MB$fitIndices[,1], -sign(sft_MB$fitIndices[,3])*sft_MB$fitIndices[,2],
 text(sft_MB$fitIndices[,1], -sign(sft_MB$fitIndices[,3])*sft_MB$fitIndices[,2],
      labels=powers,cex=cex1,col="red");
 # this line corresponds to using an R^2 cut-off of h
-abline(h=0.60,col="red")
- # Mean connectivity as a function of the soft-thresholding power
+abline(h=0.8,col="red")
+# Mean connectivity as a function of the soft-thresholding power
 plot(sft_MB$fitIndices[,1], sft_MB$fitIndices[,5],
      xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
      main = paste("Mean connectivity"))
@@ -411,247 +404,514 @@ text(sft_MB$fitIndices[,1], sft_MB$fitIndices[,5], labels=powers, cex=cex1,col="
 #dev.off()
 
 #create modules
-#Choose power based on what the soft threshold results look like, ours are showing a scale free topography at around 8. See figs above.
-net_MB = blockwiseModules(datExpr_MB, power = 7,
-                       TOMType = "unsigned", minModuleSize = 30,
-                       reassignThreshold = 0, mergeCutHeight = 0.30,
-                       numericLabels = TRUE, corType ="pearson",pamRespectsDendro = FALSE,
-                       saveTOMs = TRUE,
-                       saveTOMFileBase = "MB_TOM", 
-                       verbose = 3)
-#?blockwiseModules
-# open a graphics window
-#sizeGrWindow(12, 9)
+#Choose power based on what the soft threshold results look like, ours are showing a scale free topography at around 22. See figs above.
+A = adjacency(datExpr_MB, power = 22, type="unsigned")
+
+# Digression: to define a signed network choose A =
+# adjacency(datExprFemale, power = 12, type='signed')
+# define a dissimilarity based on the topological overlap
+dissTOM = TOMdist(A)
+geneTree = hclust(tau.dist(dissTOM), method = "average")
+plot(geneTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5, cex.axis = 1.5, cex.main = 2)
+# here we define the modules by cutting branches
+moduleLabelsManual1 = cutreeDynamic(dendro = geneTree, distM = dissTOM, method = "hybrid",deepSplit = 2, pamRespectsDendro = F, minClusterSize = 30)
+
 # Convert labels to colors for plotting
-mergedColors_MB = labels2colors(net_MB$colors)
-mergedColors_MB = gsub("yellow","#ffc425", gsub("blue","#00aedb", gsub("red", "#d11141", gsub("green","#00b159",gsub("brown","#f37735",gsub("turquoise","#8c8c8c",mergedColors_MB))))))
-#Plot the dendrogram and the module colors underneath
-#pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/taxa_dendro_modules.pdf")
-plotDendroAndColors(net_MB$dendrograms[[1]], mergedColors_MB[net_MB$blockGenes[[1]]],
+moduleColorsManual2 = labels2colors(moduleLabelsManual1)
+moduleColors_MB = gsub("yellow","#ffc425", gsub("blue","#00aedb", gsub("green","#00b159", gsub("brown","#f37735", gsub("turquoise","#8c8c8c",gsub("grey","black", moduleColorsManual2))))))
+
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/taxa_dendro_modules.pdf", height=7,width=10)
+plotDendroAndColors(geneTree, moduleColors_MB,
                     "Module colors",
                     dendroLabels = FALSE, hang = 0.03,
                     addGuide = TRUE, guideHang = 0.05)
-#dev.off()
+dev.off()
 
-moduleLabels_MB = net_MB$colors
-moduleColors_MB = labels2colors(net_MB$colors)
-moduleColors_MB = gsub("yellow","#ffc425", gsub("blue","#00aedb", gsub("red", "#d11141", gsub("green","#00b159",gsub("brown","#f37735",gsub("turquoise","#8c8c8c",mergedColors_MB))))))
-MEs_MB = net_MB$MEs;
-geneTree_MB = net_MB$dendrograms[[1]];
+MEList = moduleEigengenes(datExpr_MB, colors = moduleColors_MB)
+MEs = MEList$eigengenes
+# Add the weight to existing module eigengenes
+MET=MEs
+#MET = orderMEs(cbind(MEs, datTraits_MB$temp,datTraits_MB$chlorophyll))
+colnames(MET) = c("blue", "green","grey","yellow","orange", "black")
+# Plot the relationships among the eigengenes and the trait
+plotEigengeneNetworks(MET, "",marDendro = c(0, 4, 1, 2), marHeatmap = c(3,4, 1, 2), cex.lab = 0.6, xLabelsAngle = 90)
 
-#STEP 3
-nGenes_MB = ncol(datExpr_MB);
-nSamples_MB = nrow(datExpr_MB);
-# Recalculate MEs with color labels
-MEs0_MB = moduleEigengenes(datExpr_MB, moduleColors_MB)$eigengenes
-MEs_MB = orderMEs(MEs0_MB)
-colnames(MEs_MB) = c("red","blue", "dark grey","orange","green","yellow", "grey")
-#colnames(MEs_MB) = c("dark grey","black","blue","green","brown","red","yellow","grey")
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/dendro_modules.pdf", height=2)
+par(cex = 0.7)
+plotEigengeneNetworks(MET, "",marDendro = c(0,4,2,0),plotHeatmaps = FALSE, signed=FALSE)
+dev.off()
 
-moduleTraitCor_MB = cor(MEs_MB, datTraits_MB, use = "p");
+signif(cor(MET, use="p"), 2)
+dissimME=(1-cor(MET, method="p"))/2
+hclustdatME=hclust(tau.dist(dissimME), method="average" )
+# Plot the eigengene dendrogram
+par(mfrow=c(1,1))
+plot(hclustdatME, main="Clustering tree based on the module eigengenes")
+plotMEpairs(MET)
+
+moduleTraitCor_MB = cor(MET, datTraits_MB, use = "p", method="spearman");
 moduleTraitPvalue_MB = corPvalueStudent(moduleTraitCor_MB, nSamples_MB);
+#a <- p.adjust(moduleTraitPvalue_MB, method="bonferroni")
 
-#sizeGrWindow(12,8)
 # Will display correlations and their p-values
 textMatrix_MB =  paste(signif(moduleTraitCor_MB, 2), "\n(",
-                    signif(moduleTraitPvalue_MB, 1), ")", sep = "");
+                       signif(moduleTraitPvalue_MB, 1), ")", sep = "");
 dim(textMatrix_MB) = dim(moduleTraitCor_MB)
 # Display the correlation values within a heatmap plot
 #pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/module_cor_envir.pdf")
-par(mar = c(6, 8.5, 3, 3));
+#par(mar = c(6, 8.5, 3, 3));
+#reorder <- c("yellow", "green","orange","black","blue", "grey")
+#moduleTraitCor_MB %>%
+#  mutate(moduleTraitCor_MB[,1] =  factor(moduleTraitCor_MB[,1], levels = reorder)) %>% arrange(moduleTraitCor_MB[,1])
+
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/module_cor_envir.pdf")
 labeledHeatmap(Matrix = moduleTraitCor_MB,
-               xLabels = names(datTraits_MB),
-               yLabels = names(MEs_MB),
+               xLabels = c("Upwelling","Temperature","Salinity","Chl. a","Nitrate","Diss. Oxygen"),
+               yLabels = names(MET),
                yColorLabels = TRUE,
-               ySymbols = names(MEs_MB),
+               ySymbols = names(MET),
                colorLabels = FALSE,
                colors = blueWhiteRed(50),
-               textMatrix = textMatrix_MB,
                setStdMargins = FALSE,
                cex.text = 0.5,
                naColor = "grey",
                zlim = c(-1,1),
                main = paste("Module-trait relationships"))
-#dev.off()
+dev.off()
 
+#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/heatmap_all_modules.pdf", height=12, width=15)
+# par(mfrow=c(3,2), mar=c(1, 5, 5, 3))
+# which.module="#ffc425"; #yellow
+# plotMat(t(scale(datExpr_MB[,moduleColors_MB==which.module])),nrgcols=50,rlabels=colnames(datExpr_MB[,moduleColors_MB==which.module]),clabels=rownames(datExpr_MB),rcols=which.module)
+# which.module="#00aedb"; #blue
+# plotMat(t(scale(datExpr_MB[,moduleColors_MB==which.module])),nrgcols=50,rlabels=colnames(datExpr_MB[,moduleColors_MB==which.module]),clabels=rownames(datExpr_MB),rcols=which.module)
+# which.module="#00b159" #green
+# plotMat(t(scale(datExpr_MB[,moduleColors_MB==which.module])),nrgcols=50,rlabels=colnames(datExpr_MB[,moduleColors_MB==which.module]),clabels=rownames(datExpr_MB),rcols=which.module)
+# which.module="#f37735"; #orange
+# plotMat(t(scale(datExpr_MB[,moduleColors_MB==which.module])),nrgcols=50,rlabels=colnames(datExpr_MB[,moduleColors_MB==which.module]),clabels=rownames(datExpr_MB),rcols=which.module)
+# which.module="#8c8c8c"; #dark grey
+# plotMat(t(scale(datExpr_MB[,moduleColors_MB==which.module])),nrgcols=50,rlabels=colnames(datExpr_MB[,moduleColors_MB==which.module]),clabels=rownames(datExpr_MB),rcols=which.module)
+# which.module="black"; #grey
+# plotMat(t(scale(datExpr_MB[,moduleColors_MB==which.module])),nrgcols=50,rlabels=colnames(datExpr_MB[,moduleColors_MB==which.module]),clabels=rownames(datExpr_MB),rcols=which.module)
+color = c("#ffc425","#00aedb","#00b159","#f37735","#8c8c8c","black")
+
+yel_rich <- t(estimate_richness(t(otu_table(round(as((otu_table(datExpr_MB[,moduleColors_MB=="#ffc425"])), "matrix")), taxa_are_rows(datExpr_MB))), measures="Observed"))
+rownames(yel_rich) <- "yellow"
+blue_rich <- t(estimate_richness(t(otu_table(round(as((otu_table(datExpr_MB[,moduleColors_MB=="#00aedb"])), "matrix")), taxa_are_rows(datExpr_MB))), measures="Observed"))
+rownames(blue_rich) <- "blue"
+green_rich <- t(estimate_richness(t(otu_table(round(as((otu_table(datExpr_MB[,moduleColors_MB=="#00b159"])), "matrix")), taxa_are_rows(datExpr_MB))), measures="Observed"))
+rownames(green_rich) <- "green"
+orange_rich <- t(estimate_richness(t(otu_table(round(as((otu_table(datExpr_MB[,moduleColors_MB=="#f37735"])), "matrix")), taxa_are_rows(datExpr_MB))), measures="Observed"))
+rownames(orange_rich) <- "orange"
+dg_rich <- t(estimate_richness(t(otu_table(round(as((otu_table(datExpr_MB[,moduleColors_MB=="#8c8c8c"])), "matrix")), taxa_are_rows(datExpr_MB))), measures="Observed"))
+rownames(dg_rich) <- "dg"
+black <- t(estimate_richness(t(otu_table(round(as((otu_table(datExpr_MB[,moduleColors_MB=="black"])), "matrix")), taxa_are_rows(datExpr_MB))), measures="Observed"))
+rownames(dg_rich) <- "black"
+
+rich_all_mod <- rbind(yel_rich,blue_rich,green_rich,orange_rich,dg_rich, black)
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/module_richness_time.pdf", height=4, width=4.5)
+par(mar=c(3,4,1,4))
+barplot(rich_all_mod, col=color, cex.axis=0.8,cex.lab=0.8, space=c(0.5,2,2,1,3,3,0,2),cex=0.8, ylab="Number of taxa per module", xlab="", xaxt="n",ylim=c(0,125))
+axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
+ labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
+            "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
+env_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/MBNMS_GHRSST_15_16.csv", header=TRUE)
+par(new=TRUE)
+plot(env_MB$Mean.SST~dmy(env_MB$Date),type="l",ylim=c(12,18), lwd=1,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey40"), lty=2)
+axis(side=4, cex.axis=0.8)
+mtext("Sea surface temperature",side=4,line=1.9,las=3, cex=0.8)
+dev.off()
+
+chooseTopHubInEachModule(datExpr_MB,moduleColors_MB, omitColors = "", power = 22,type = "unsigned")
+GS1=as.numeric(cor(datTraits_MB$chlorophyll,datExpr_MB))
+GeneSignificance=abs(GS1)
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/module_significance_chl.pdf", height=4, width=5)
+plotModuleSignificance(GeneSignificance,moduleColors_MB,main="")
+dev.off()
+
+# Next module significance is defined as average gene significance.
+ModuleSignificance=tapply(GeneSignificance, moduleColors_MB, mean, na.rm=T)
 
 #STEP 5
-modules = c("#00b159", "#ffc425", "#00aedb","#f37735","#8c8c8c", "#d11141");
+modules = c("#00b159", "#ffc425", "#00aedb", "#f37735", "#8c8c8c", "#d11141")
 # Select module probes
 probes = names(as.data.frame(datExpr_MB))
 inModule = is.finite(match(moduleColors_MB, modules));
 modProbes = probes[inModule];
+
 #modGenes = annot$gene_symbol[match(modProbes, annot$substanceBXH)];
 # Select the corresponding Topological Overlap
-TOM = TOMsimilarityFromExpr(datExpr_MB, power = 7);
+TOM = TOMsimilarityFromExpr(datExpr_MB, power = 22,networkType="unsigned");
 modTOM = TOM[inModule, inModule];
 dimnames(modTOM) = list(modProbes, modProbes)
 
 # Export the network into edge and node list files Cytoscape can read
 cyt = exportNetworkToCytoscape(modTOM,
-                               edgeFile = paste("CytoscapeInput-edges-", paste(modules, collapse="-"), ".txt", sep=""),
-                               nodeFile = paste("CytoscapeInput-nodes-", paste(modules, collapse="-"), ".txt", sep=""),
-                               weighted = TRUE,
-                               threshold = 0.1,
-                               nodeNames = modProbes,
-                               nodeAttr = moduleColors_MB[inModule])
+      edgeFile = paste("CytoscapeInput-edges-", paste(modules, collapse="-"), ".txt", sep=""),
+      nodeFile = paste("CytoscapeInput-nodes-", paste(modules, collapse="-"), ".txt", sep=""),
+      weighted = TRUE,threshold = 0, nodeNames = modProbes, nodeAttr = moduleColors_MB[inModule])
 
 write.csv(cyt$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge.csv")
 write.csv(cyt$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node.csv")
+
+#moduleColors_MB = gsub("yellow","#ffc425", gsub("blue","#00aedb", gsub("red", "#d11141", gsub("green","#00b159",gsub("brown","#f37735",gsub("turquoise","#8c8c8c",moduleColors_MB))))))
+
+################ Choose only single module ###############
+#modules_dg = c("#8c8c8c","#00aedb");
+blue <- "#00aedb"
+
+# Select module probes
+inModule_blue = is.finite(match(moduleColors_MB, blue));
+modProbes_blue = probes[inModule_blue];
+TOM_blue = TOMsimilarityFromExpr(datExpr_MB, power = 22);
+modTOM_blue = TOM_blue[inModule_blue, inModule_blue];
+dimnames(modTOM_blue) = list(modProbes_blue, modProbes_blue)
+
+cyt_blue = exportNetworkToCytoscape(modTOM_blue,
+      edgeFile = paste("CytoscapeInput-edges-", paste(blue, collapse="-"), ".txt", sep=""),
+      nodeFile = paste("CytoscapeInput-nodes-", paste(blue, collapse="-"), ".txt", sep=""),
+      weighted = TRUE,threshold = 0.2, nodeNames = modProbes_blue, nodeAttr = moduleColors_MB[inModule_blue])
+
+write.csv(cyt_blue$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_blue.csv")
+write.csv(cyt_blue$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_blue.csv")
+
+
+dg <- "#8c8c8c"
+# Select module probes
+inModule_dg = is.finite(match(moduleColors_MB, dg));
+modProbes_dg = probes[inModule_dg];
+TOM_dg = TOMsimilarityFromExpr(datExpr_MB, power = 22);
+modTOM_dg = TOM_dg[inModule_dg, inModule_dg];
+dimnames(modTOM_dg) = list(modProbes_dg, modProbes_dg)
+
+cyt_dg = exportNetworkToCytoscape(modTOM_dg,
+      edgeFile = paste("CytoscapeInput-edges-", paste(blue, collapse="-"), ".txt", sep=""),
+      nodeFile = paste("CytoscapeInput-nodes-", paste(blue, collapse="-"), ".txt", sep=""),
+      weighted = TRUE,threshold = 0, nodeNames = modProbes_dg, nodeAttr = moduleColors_MB[inModule_dg])
+
+
+
+write.csv(cyt_dg$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_dg.csv")
+write.csv(cyt_dg$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_dg.csv")
+
 ```
 
-```{r network traits based on PCA,echo=FALSE,message=FALSE, warning=FALSE}
-meta<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/m2w_metadata_MB.csv")
+###SPLS analysis
+```{r SPLS on dark grey and blue module,echo=FALSE,message=FALSE, warning=FALSE}
+datExpr_MB <- as.data.frame(datExpr_MB)
+datExpr_MB_t <- t(datExpr_MB)
+blue_MB <- data.frame(names(datExpr_MB)[moduleColors_MB=="#00aedb"]) 
+blue_MB$module <- "1"
+names(blue_MB) <- c("taxa","module")
+dg_MB <- data.frame(names(datExpr_MB)[moduleColors_MB=="#8c8c8c"])
+dg_MB$module <- "2"
+names(dg_MB) <- c("taxa","module")
+
+blue_grey <- rbind(blue_MB,dg_MB)
+blue_grey_taxa <- blue_grey[,1]
+datExpr_MB_BG <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% blue_grey_taxa)
+write.csv(datExpr_MB_BG, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/datExpr_MB_BG.csv")
+
+blue_grey <- blue_grey[match(rownames(datExpr_MB_BG), blue_grey$taxa),]
+datExpr_MB_BG <- t(datExpr_MB_BG)
+
+head(cbind(rownames(datExpr_MB_BG), rownames(meta)))
+pca.gene_BG <- pca(datExpr_MB_BG, ncomp = 8, center = TRUE, scale = TRUE)
+plot(pca.gene_BG)
+MB.pls_BG <- pls(datExpr_MB_BG, meta, ncomp = 6, mode = "regression")
+MB.spls_BG <- spls(datExpr_MB_BG, meta, ncomp =6, mode = "regression")
+tune.spls <- perf(MB.spls_BG, validation = 'Mfold',folds=8,
+                  criterion = 'all', progressBar = FALSE, nrepeat=100)
+plot(tune.spls$Q2.total)
+
+summary(tune.spls$PRESS)
+# to save as a pdf
+
+#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/SPLS_network.pdf", height=10, width=12)
+#network(MB.spls_BG,color.node=c("grey", "white"),color.edge = c("red","orange","cyan","blue"),row.names=FALSE, cex.node.name=0.9,cutoff = 0.30)
+#dev.off()
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/SPLS_heatmap_darkg_blue.pdf", height=6, width=9)
+par(mar=c(1,1,1,1))
+#RdYlBu <- t(brewer.pal(11,"RdYlBu"))
+col_a <- colorRampPalette(c("#313695","#4575B4","#74ADD1","#ABD9E9","#E0F3F8","#FFFFBF","#FEE090","#FDAE61","#F46D43","#D73027","#A50026"))(90)
+cim(MB.spls_BG, comp = 1:3, xlab = "",dist.method = c("euclidean", "euclidean"),color=col_a,row.sideColors = c("#00aedb", "#8c8c8c")[as.factor(blue_grey$module)],transpose=TRUE,threshold=0.4,keysize.label = 0.7,keysize =c(1, 1),row.cex=0.8,col.cex=0.6,ylab = "",margins = c(10, 8),row.names=FALSE,col.names=c("Upwelling","Temperature","Salinity","Chl. a","Nitrate","Diss. Oxygen"))
+dev.off()
+```
+
+```{r pie charts of trophic levels}
+trophic_blue <- c(9, 27, 8, 36, 1)
+trophic_blue <- prop.table(trophic_blue)*100
+labels_blue <- c("Detritivores (11.0%)", "Autotrophs (33.3%)", "Mixotrophs (9.8%)", "Heterotrophs (44.4%)","Tertiary consumers (1.2%)")
+
+trophic_grey <- c(26, 20, 12, 55, 1)
+trophic_grey <- prop.table(trophic_grey)*100
+labels_grey <- c("Bacteria/Archaea/Fungi (22.8%)", "Primary producers (17.5%)", "Primary consumers (10.5%)", "Secondary consumers (48.2%)","Tertiary consumers (0.9%)")
+
+# Plot the chart.
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/trophic_pie_blue.pdf", height=5, width=7)
+pie(trophic_blue,labels_blue, border=FALSE,col=c("lightcyan","lightblue","#00aedb","#2b8cbe","steelblue4"), cex=0.8)
+dev.off()
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/trophic_pie_grey.pdf", height=5, width=7)
+pie(trophic_grey,labels_grey, border=FALSE,col=c("grey95","grey80","grey60","grey40","grey20"),cex=0.8)
+dev.off()
+
+```
+
+```{r intramodular connectivity}
+con <- intramodularConnectivity.fromExpr(datExpr_MB, moduleColors_MB, 
+              corFnc = "cor", corOptions = "use = 'p'",
+              weights = NULL,
+              distFnc = "dist", distOptions = "method = 'euclidean'",
+              networkType = "signed", power = 22,
+              scaleByMax = FALSE,
+              ignoreColors = if (is.numeric(colors)) 0 else "grey",
+              getWholeNetworkConnectivity = TRUE)
+
+con$taxa <- rownames(t(datExpr_MB))
+blue_MB <- blue_MB[,1]
+con_blue <- con[con$taxa %in% blue_MB, ]
+write.csv(con_blue, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_blue.csv")
+trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
+con_blue$trophic_lev <- trophic_lev$trophic_fv[match(con_blue$taxa, trophic_lev$taxa)]
+dg_MB <- dg_MB[,1]
+con_dg <- con[con$taxa %in% dg_MB, ]
+write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
+con_dg$trophic_lev <- trophic_lev$trophic_fv[match(con_dg$taxa, trophic_lev$taxa)]
+
+#Blue and grey separately!
+datExpr_MB_Blue <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% blue_MB)
+datExpr_MB_grey <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% dg_MB)
+cor_blue <- cor(as.matrix(t(datExpr_MB_Blue)),meta, method = "pearson")
+cor_blue <- as.data.frame(cor_blue)
+cor_dg <- cor(as.matrix(t(datExpr_MB_grey)),meta, method = "pearson")
+cor_dg <- as.data.frame(cor_dg)
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/con_env.pdf", height=5, width=9)
+par(mfrow=c(1,2))
+par(mar=c(4,4,3,2.7))
+df_blue <- data.frame(cor_blue$temp,con_blue$kWithin,con_blue$trophic_lev)
+plot(df_blue$cor_blue.temp,df_blue$con_blue.kWithin,cex.axis=0.8,pch=c(15,23,16,17,25)[as.factor(df_blue$con_blue.trophic_lev)],ylim=c(-1.0,18), col="#00aedb",bg="#00aedb",ylab="Intra-network connectivity",xlab="Correlation w/ Temperature")
+lm_blue <- lm(con_blue.kWithin~cor_blue.temp, data=df_blue)
+newblue <- seq(min(df_blue$cor_blue.temp), max(df_blue$cor_blue.temp), 0.001)
+pre_blue <- predict(lm_blue, newdata=data.frame(cor_blue.temp=newblue), interval="confidence")
+lines(newblue, pre_blue[,1], lty=1,col="grey50")
+lines(newblue, pre_blue[,2], lty=2,col="grey50")
+lines(newblue, pre_blue[,3], lty=2, col="grey50")
+abline(v=0.4, lwd=2, col="orangered", lty=2)
+abline(h=15, lwd=2,col="orangered", lty=2)
+legend("topright", legend=substitute(paste(r, " = ", r2,", p<0.001"), list(r2 = round(summary(lm_blue)$adj.r.squared, digits=2))),cex=0.9,bty="n")
+#legend("toplef", legend="B", bty="n", cex=0.9)
+
+par(mar=c(4,2.7,3,4))
+df_dg <- data.frame(cor_dg$chlorophyll,con_dg$kWithin, con_dg$trophic_lev)
+plot(df_dg$cor_dg.chlorophyll,df_dg$con_dg.kWithin,bg="#8c8c8c",pch=c(15,23,16,17,25)[as.factor(df_dg$con_dg.trophic_lev)],ylim=c(0.5,35),cex.axis=0.8,ylab="",col="#8c8c8c", xlab="Correlation w/ Chlorophyll a")
+lm_dg <- lm(con_dg.kWithin~cor_dg.chlorophyll, data=df_dg)
+newdg <- seq(min(df_dg$cor_dg.chlorophyll), max(df_dg$cor_dg.chlorophyll), 0.001)
+pre_dg <- predict(lm_dg, newdata=data.frame(cor_dg.chlorophyll=newdg), interval="confidence")
+lines(newdg, pre_dg[,1], lty=1,col="grey50")
+lines(newdg, pre_dg[,2], lty=2,col="grey50")
+lines(newdg, pre_dg[,3], lty=2, col="grey50")
+abline(v=-0.4, lwd=2, col="orangered", lty=2)
+abline(h=32.5, lwd=2,col="orangered", lty=2)
+legend("topright",legend=substitute(paste(r, " = ", r2,", p<0.001"), list(r2 = round(summary(lm_dg)$adj.r.squared, digits=2))), cex=0.9, bty="n")
+#legend("toplef", legend="C", bty="n", cex=0.9)
+dev.off()
+
+```
+
+```{r re-export networks with connectedness and trophic level}
+cyt_blue$nodeData$trophic_level <- trophic_lev$trophic_fv[match(cyt_blue$nodeData$nodeName, trophic_lev$taxa)]
+cyt_blue$nodeData$connectivity <- con_blue$kWithin[match(cyt_blue$nodeData$nodeName, con_blue$taxa)]
+
+write.csv(cyt_blue$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_blue.csv")
+write.csv(cyt_blue$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_blue.csv")
+
+cyt_dg$nodeData$trophic_level <- trophic_lev$trophic_fv[match(cyt_dg$nodeData$nodeName, trophic_lev$taxa)]
+cyt_dg$nodeData$connectivity <- con_dg$kWithin[match(cyt_dg$nodeData$nodeName, con_dg$taxa)]
+
+write.csv(cyt_dg$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_dg.csv")
+write.csv(cyt_dg$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_dg.csv")
+
+```
+
+###PCA
+```{r env traits based on PCA,echo=FALSE,message=FALSE, warning=FALSE}
+#meta<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/m2w_metadata_MB.csv")
 #names(meta)
-DATES<-str_split(meta$SAMPLING_date_time, " ", simplify=T)[,2]
-meta<-meta[,c(18, 47,48, 51,52)]
-standard<-decostand(meta, method="max") #standardize variables
+#DATES<-str_split(meta$SAMPLING_date_time, " ", simplify=T)[,2]
+meta2<-meta[,c(1,2,3,4,5)]
+standard<-decostand(meta2, method="max") #standardize variables
 
 	#PCA
-envir.PCA <- princomp(standard)
-summary(envir.PCA)
-loadings(envir.PCA)
-Loadings <- as.data.frame(envir.PCA$loadings[,1:2])
+envir.PCA <- prcomp(standard, scale=TRUE)
+#?prcomp
+#summary(envir.PCA)
+Loadings <- as.data.frame(envir.PCA$rotation[,1:5])
+scores <- as.data.frame(envir.PCA$x[,1:5])
 fviz_eig(envir.PCA)
 #fviz_pca_ind(envir.PCA)
   
 #plotting w ggfortify; see https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html
 #pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/envirPCA.pdf")
 autoplot(envir.PCA,
-         loadings = T, loadings.label = F, loadings.label.size = 4)+
-  theme_minimal()+
-  annotate("text", x = -0.2, y=0.28, label = "Upwelling", color = "red")+
-  annotate("text", x = 0.25, y=0.21, label = "Nitrate", color = "red")+
-  annotate("text", x = -0.05, y= -0.07, label = "Temperature", color = "red")+
-  annotate("text", x = 0.032, y= -0.01, label = "Salinity", color = "red")+
-  annotate("text", x = -0.06, y= -0.01, label = "Oxygen", color = "red")
+         loadings = T, loadings.label = T, loadings.label.size = 4)+
+  theme_minimal()
+  #annotate("text", x = -0.2, y=0.28, label = "Upwelling", color = "red")+
+  #annotate("text", x = 0.25, y=0.21, label = "Nitrate", color = "red")+
+  #annotate("text", x = -0.05, y= -0.07, label = "Temperature", color = "red")+
+  #annotate("text", x = 0.032, y= -0.01, label = "Salinity", color = "red")+
+  #annotate("text", x = -0.06, y= -0.01, label = "Oxygen", color = "red")
 #dev.off()
 	
-
-#moduleTraitCor_MB = cor(MEs_MB, datTraits_MB, use = "p");
-#moduleTraitPvalue_MB = corPvalueStudent(moduleTraitCor_MB, nSamples_MB);
+moduleTraitCor_MB = cor(MEs_MB, meta2, use = "p");
+moduleTraitPvalue_MB = corPvalueStudent(moduleTraitCor_MB, nSamples_MB);
 
 # Will display correlations and their p-values
-#textMatrix_MB =  paste(signif(moduleTraitCor_MB, 2), "\n(",
-#                    signif(moduleTraitPvalue_MB, 1), ")", sep = "");
+textMatrix_MB =  paste(signif(moduleTraitCor_MB, 2), "\n(",
+                    signif(moduleTraitPvalue_MB, 1), ")", sep = "");
 
-#labeledHeatmap(Matrix = moduleTraitCor_MB,
-#               xLabels = names(datTraits_MB),
-#               yLabels = names(MEs_MB),
-#               yColorLabels = TRUE,
-#               ySymbols = names(MEs_MB),
-#               colorLabels = FALSE,
-#               colors = blueWhiteRed(50),
-#               textMatrix = textMatrix_MB,
-#               setStdMargins = FALSE,
-#               cex.text = 0.5,
-#               naColor = "grey",
-#               zlim = c(-1,1),
-#               main = paste("Module-trait relationships"))
+labeledHeatmap(Matrix = moduleTraitCor_MB,
+              xLabels = names(scores),
+              yLabels = names(MEs_MB),
+              yColorLabels = TRUE,
+              ySymbols = names(MEs_MB),
+              colorLabels = FALSE,
+              colors = blueWhiteRed(50),
+              textMatrix = textMatrix_MB,
+              setStdMargins = FALSE,
+              cex.text = 0.5,
+              naColor = "grey",
+              zlim = c(-1,1),
+              main = paste("Module-trait relationships"))
+
+############### BIOENV #######
+MB_all_tax_df <- t(data.frame(MB_all_tax_ps_rel@otu_table))
+meta_bioenv<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/m2w_metadata_MB.csv")
+meta_bioenv<-meta_bioenv[,c(18,47,48,49,51,52)]
+bioenv <- bioenv(MB_all_tax_df, meta_bioenv, method="kendall", index="bray")
+
+capscale <- capscale(MB_all_tax_df ~ upwelling+temp+salinity+chlorophyll+nitrate+diss_oxygen, meta_bioenv, distance = "bray")
+
+#summary(capscale)
+plot(capscale, main="capscale")
+#anova(capscale, by='margin')
 
 ```
-###Pseudoautocorrelation of modules
 
+###Pseudoautocorrelation of modules
 ```{r pseudo autocorrelation of all module MB,echo=FALSE,message=FALSE, warning=FALSE}
 datExpr_MB <- as.data.frame(datExpr_MB)
+grey_MB <- names(datExpr_MB)[moduleColors_MB=="black"] #grey
 blue_MB <- names(datExpr_MB)[moduleColors_MB=="#00aedb"] #blue
-dg_MB <- names(datExpr_MB)[moduleColors_MB=="#8c8c8c"]#dark grey
+dg_MB <- names(datExpr_MB)[moduleColors_MB=="#8c8c8c"] #dark grey
 orange_MB <- names(datExpr_MB)[moduleColors_MB=="#f37735"] #orange
 green_MB <- names(datExpr_MB)[moduleColors_MB=="#00b159"] #green
-yel_MB <-names(datExpr_MB)[moduleColors_MB=="#ffc425"] # yellow
-red_MB <- names(datExpr_MB)[moduleColors_MB=="#d11141"] #red
+yel_MB <-names(datExpr_MB)[moduleColors_MB=="#ffc425"] #yellow
+#red_MB <- names(datExpr_MB)[moduleColors_MB=="#d11141"] #red
+write.csv(qpcR:::cbind.na(blue_MB,dg_MB,orange_MB,green_MB,yel_MB, grey_MB), file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/all_module_taxa.csv")
 
 #filter out desired color module
-MB_taxa_yel = prune_taxa(yel_MB,MB_all_tax_ps_rel)
+MB_taxa_yel = prune_taxa(yel_MB,MB_all_filt)
 yel_otu_MB<-otu_table(MB_taxa_yel)
-dates_MB<-ymd(sample_data(MB_taxa_yel)$collection_date)
+dates_MB<-dmy(sample_data(MB_all_tax_ps_rel)$collection_date)
 
-MB_taxa_red = prune_taxa(red_MB,MB_all_tax_ps_rel)
-red_otu_MB<-otu_table(MB_taxa_red)
+#MB_taxa_red = prune_taxa(red_MB,MB_all_filt)
+#red_otu_MB<-otu_table(MB_taxa_red)
 
-MB_taxa_blue = prune_taxa(blue_MB,MB_all_tax_ps_rel)
+MB_taxa_blue = prune_taxa(blue_MB,MB_all_filt)
 blue_otu_MB<-otu_table(MB_taxa_blue)
 
-MB_taxa_green = prune_taxa(green_MB,MB_all_tax_ps_rel)
+MB_taxa_green = prune_taxa(green_MB,MB_all_filt)
 green_otu_MB<-otu_table(MB_taxa_green)
 
-MB_taxa_dg = prune_taxa(dg_MB,MB_all_tax_ps_rel)
+MB_taxa_dg = prune_taxa(dg_MB,MB_all_filt)
 dg_otu_MB<-otu_table(MB_taxa_dg)
 
-dist.yel_sa_MB <- OneStep(OTUs=yel_otu_MB, DATES=dates_MB, METHOD="jaccard")
-dist.red_sa_MB <- OneStep(OTUs=red_otu_MB, DATES=dates_MB, METHOD="jaccard")
-dist.blue_sa_MB <- OneStep(OTUs=blue_otu_MB, DATES=dates_MB, METHOD="jaccard")
-dist.green_sa_MB <- OneStep(OTUs=green_otu_MB, DATES=dates_MB, METHOD="jaccard")
-dist.dg_sa_MB <- OneStep(OTUs=dg_otu_MB, DATES=dates_MB, METHOD="jaccard")
+#dist.yel_sa_MB <- OneStep(OTUs=yel_otu_MB, DATES=dates_MB, METHOD="jaccard")
+#dist.red_sa_MB <- OneStep(OTUs=red_otu_MB, DATES=dates_MB, METHOD="jaccard")
+dist.blue_sa_MB <- OneStep(OTUs=blue_otu_MB, DATES=dates_MB, METHOD="bray")
+#dist.green_sa_MB <- OneStep(OTUs=green_otu_MB, DATES=dates_MB, METHOD="jaccard")
+dist.dg_sa_MB <- OneStep(OTUs=dg_otu_MB, DATES=dates_MB, METHOD="bray")
 
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/yel_black_PA.pdf",height=8,width=8)
-#par(mfcol=c(2,1))
-#par(mar=c(0.5,4,3,4))
-boxplot(dist.yel_sa_MB, xaxt="n",ylim=c(0.2,1),at=c(1,3.5,7.5,12.5,18,19,22),main="MB",col="#ffc425", ylab="Jaccard Distance",xlim=c(-1.8,22))
-#par(new=TRUE)
-#plot(MB_all_tax_ps_rel@sam_data$diss_oxygen~dates_MB,type="l",ylim=c(5,7.5), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
-#axis(side=4)
-#mtext("dissolved oxygen",side=4,line=1.9,las=3)
-#legend("topleft", "A", bty="n")
-#mtext("Reference point 1",cex=0.8)
-#par(mar=c(3,4,0.5,4))
-#boxplot(dist.black_sa_MB, xlab="", ylim=c(0.2,1),at=c(1,3.5,7.5,12.5,18,19,22),ylab="Jaccard Distance", xlim=c(-1.8,22), ylim=c(0.3,1), col="black",xaxt="n")
+bray_ref_b <- vegdist(t(blue_otu_MB[,1:3]), method="bray")
+mean(bray_ref_b)
+
+bray_ref_g <- vegdist(t(dg_otu_MB[,1:3]),method="bray")
+mean(bray_ref_g)
+
+colMeans(dist.blue_sa_MB)
+colMeans(dist.dg_sa_MB)
+
+#PLOT DARK GREY AND BLUE
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/blue_dg_PA.pdf",height=6,width=6)
+par(mfcol=c(2,1))
+par(mar=c(0.5,5,3,4))
+boxplot(dist.dg_sa_MB, cex.lab=0.8,cex.axis=0.6,las=1,xlab="", at=c(1,4.5,7.5,12.5,18,19,22),ylab="Jaccard Distance", xlim=c(-1.8,22), cex=0.8,ylim=c(0.45,1), col="#8c8c8c",xaxt="n")
 #axis(side=1, at=c(1,3.5,7.5,12.5,18,19,22),
 #     labels=c("July","Sep", "Dec","Apr", "Aug","Sep", "Dec"), las=3,cex.axis=0.7)
-#par(new=TRUE)
-#plot(MB_all_tax_ps_rel@sam_data$diss_oxygen~dates_MB,type="l",ylim=c(5,7.5), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
-#axis(side=4)
-#mtext("dissolved oxygen",side=4,line=1.9,las=3)
-#legend("topleft", "B", bty="n")
-#dev.off()
-
-###BLUE AND RED
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/red_blue_PA.pdf",height=8,width=8)
+legend("topleft", "A", bty="n")
+#axis(side=1, at=c(1,2,3,4,5,6,7), labels=c("0","68","133","229","357","489","515"),las=1,cex.axis=1)
+par(new=TRUE)
+plot(env_MB_high_res$chl_gff~dmy(env_MB_high_res$date),type="l",ylim=c(-1,20), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
+axis(side=4, cex.axis=0.7, las=1)
+mtext("Chlorophyll a",side=4,line=1.9,las=3, cex=0.8)
+par(mar=c(3,5,0.5,4))
+boxplot(dist.blue_sa_MB,cex.lab=0.8, cex.axis=0.6,las=1,xlab="", at=c(1,4.5,7.5,12.5,18,19,22),ylab="Jaccard Distance", xlim=c(-1.8,22), ylim=c(0.45,1), col="#00aedb",xaxt="n")
+axis(side=1, at=c(-2,1,4.5,7.5,12.5,18,19,22),
+     labels=c("Apr","July","Oct", "Dec","Apr", "Aug","Sep", "Dec"), las=3,cex.axis=0.7)
+par(new=TRUE)
 env_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/MBNMS_GHRSST_15_16.csv", header=TRUE)
-par(mfcol=c(2,1))
-par(mar=c(0.5,4,3,2))
-boxplot(dist.red_sa_MB, xaxt="n",ylim=c(0.3,1),at=c(1,3.5,7.5,12.5,18,19,22),main="MB",col="#d11141",xlim=c(-1.8,22), ylab="Jaccard Distance")
-#par(new=TRUE)
-#plot(MB_all_tax_ps_rel@sam_data$temp~dates_MB,type="l",ylim=c(10,19), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
-#axis(side=4)
-#mtext("SST",side=4,line=1.9,las=3)
-legend("topleft", "A", bty="n")
-#mtext("Reference point 1",cex=0.8)
-par(mar=c(3,4,0.5,2))
-boxplot(dist.blue_sa_MB, xlab="", at=c(1,3.5,7.5,12.5,18,19,22),ylab="Jaccard Distance", xlim=c(-1.8,22), ylim=c(0.3,1), col="#00aedb",xaxt="n")
-axis(side=1, at=c(1,3.5,7.5,12.5,18,19,22),
-     labels=c("July","Sep", "Dec","Apr", "Aug","Sep", "Dec"), las=3,cex.axis=0.7)
-#axis(side=1, at=c(1,2,3,4,5,6,7), labels=c("0","68","133","229","357","489","515"),las=1,cex.axis=1)
-#par(new=TRUE)
-#plot(MB_all_tax_ps_rel@sam_data$temp~dates_MB,type="l",ylim=c(10,19), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
-#axis(side=4)
-#mtext("SST",side=4,line=1.9,las=3)
+plot(env_MB$Mean.SST~dmy(env_MB$Date),type="l",ylim=c(12,20), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
 legend("topleft", "B", bty="n")
-#ev.off()
+axis(side=4, las=1, cex.axis=0.6)
+mtext("Sea surface temp.",cex=0.8,side=4,line=1.9,las=3)
+dev.off()
 
 
-##### GREEN AND DARK GREY
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/green_dg_PA.pdf",height=8,width=8)
-par(mfcol=c(2,1))
-par(mar=c(0.5,4,3,2))
-boxplot(dist.green_sa_MB, xaxt="n",ylim=c(0.3,1),at=c(1,3.5,7.5,12.5,18,19,22),main="MB",col="#00b159",xlim=c(-1.8,22), ylab="Jaccard Distance")
-#par(new=TRUE)
-#plot(MB_all_tax_ps_rel@sam_data$chlorophyll~dates_MB,type="l",ylim=c(0,19), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
-#axis(side=4)
-#mtext("Chlorophyll",side=4,line=1.9,las=3)
-legend("topleft", "A", bty="n")
-#mtext("Reference point 1",cex=0.8)
-par(mar=c(3,4,0.5,2))
-boxplot(dist.dg_sa_MB, xlab="", at=c(1,3.5,7.5,12.5,18,19,22),ylab="Jaccard Distance", xlim=c(-1.8,22), ylim=c(0.3,1), col="#8c8c8c",xaxt="n")
-axis(side=1, at=c(1,3.5,7.5,12.5,18,19,22),
-     labels=c("July","Sep", "Dec","Apr", "Aug","Sep", "Dec"), las=3,cex.axis=0.7)
-#axis(side=1, at=c(1,2,3,4,5,6,7), labels=c("0","68","133","229","357","489","515"),las=1,cex.axis=1)
-#par(new=TRUE)
-#plot(MB_all_tax_ps_rel@sam_data$chlorophyll~dates_MB,type="l",ylim=c(0,19), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
-#axis(side=4)
-#mtext("Chlorophyll",side=4,line=1.9,las=3)
-legend("topleft", "B", bty="n")
-#dev.off()
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/blue_dg_PA_env.pdf",height=6,width=6)
+dif_SA<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/dif_SA.csv")
+par(mfrow=c(2,1))
+par(mar=c(4,4,1,1))
+plot(dif_SA$dif_SST,dif_SA$dif_blue, xlab="Delta T",log="",ylab="Delta Jaccard", col="#00aedb", pch=19)
+plot(dif_SA$dif_chl,dif_SA$dif_grey, xlab="Delta Chl.",log="",ylab="Delta Jaccard", col="grey",pch=19)
+dev.off()
+
+```
+
+```{r average line plots by module}
+par(mfrow=c(3,2))
+MB_taxa_yel = prune_taxa(yel_MB,MB_merge_filt)
+yel_otu_MB<-otu_table(MB_taxa_yel)
+ave_yel_otu_MB <- colMeans(yel_otu_MB)
+plot(ave_yel_otu_MB~ dmy(traitData_MB$collection_date),lwd=2.5, type="l", col="#ffc425",ylab="Relative abundance")
+
+MB_taxa_blue = prune_taxa(blue_MB,MB_merge_filt)
+blue_otu_MB<-otu_table(MB_taxa_blue)
+ave_blue_otu_MB <- colMeans(blue_otu_MB)
+plot(ave_blue_otu_MB~ dmy(traitData_MB$collection_date),lwd=2.5,col="#00aedb", type="l",ylab="Relative abundance")
+
+MB_taxa_green = prune_taxa(green_MB,MB_merge_filt)
+green_otu_MB<-otu_table(MB_taxa_green)
+ave_green_otu_MB <- colMeans(green_otu_MB)
+plot(ave_green_otu_MB~ dmy(traitData_MB$collection_date),lwd=2.5, col="#00b159",type="l",ylab="Relative abundance")
+
+MB_taxa_dg = prune_taxa(dg_MB,MB_merge_filt)
+dg_otu_MB<-otu_table(MB_taxa_dg)
+ave_dg_otu_MB <- colMeans(dg_otu_MB)
+plot(ave_dg_otu_MB~ dmy(traitData_MB$collection_date), type="l",lwd=2.5,col="#8c8c8c",ylab="Relative abundance")
+
+MB_taxa_orange = prune_taxa(orange_MB,MB_merge_filt)
+orange_otu_MB<-otu_table(MB_taxa_orange)
+ave_orange_otu_MB <- colMeans(orange_otu_MB)
+plot(ave_orange_otu_MB~ dmy(traitData_MB$collection_date), type="l",lwd=2.5,col="#f37735",ylab="Relative abundance")
+
+MB_taxa_black = prune_taxa(grey_MB,MB_merge_filt)
+black_otu_MB<-otu_table(MB_taxa_black)
+ave_black_otu_MB <- colMeans(black_otu_MB)
+plot(ave_black_otu_MB~ dmy(traitData_MB$collection_date), type="l",lwd=2.5,col="black",ylab="Relative abundance")
 ```
 
 ```{r lag analysis, eval=FALSE, include=FALSE}
@@ -679,11 +939,9 @@ lagMB <- LAGCOR(otus, lag = 1)
   
 ```
 
-### Supplementary Figures
-Supplementary figures based to the Microbes to Mammals manuscript.
 ####Richness and Pseudoautocorrelation of whole community
 ```{r Richness of total taxa, echo=FALSE, fig.cap="\\label{fig:fig S1}Figure S1: A: Total richness (number of taxa) in Monterey Bay National Marine Sanctuary through April 2015 - December 2016 with sea surface temperature anomaly. B: Pseudo-autocorrelation analyses across all taxa compared to the time point prior to it. First time point is zero due to not having a reference point. The vertical dashed line represents December 31, 2015.", fig.height=8, fig.width=6.5}
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/Supplemental/obs_richness_PA.pdf",height=8,width=10)
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/Supplemental/obs_richness_PA.pdf",height=6,width=9)
 par(mar=c(3,4,2,4.5))
 par(mfrow=c(1,2))
 otu_table(MB_all_filt) <- otu_table(round(as((otu_table(MB_all_filt)), "matrix")), taxa_are_rows(MB_all_filt)) #doesn't work to 
@@ -703,6 +961,7 @@ plot(env_MB$Mean.SST~dmy(env_MB$Date),type="l",ylim=c(10,20), lwd=5,xlab="", yla
 axis(side=4)
 mtext("Sea surface temperature",side=4,line=1.9,las=3)
 legend("topleft", "A", bty="n")
+#dev.off()
 
 #PA
 OTUs_MB<-otu_table(MB_all_tax_ps_ts)
@@ -718,8 +977,11 @@ axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
 mtext("2015", side=1, line=3, at=4,cex=0.8)
 mtext("2016", side=1, line=3, at=16,cex=0.8)
 legend("topleft", "B", bty="n")
-#dev.off()
+dev.off()
+
+
 ```
+
 ####Heatmap and dendrogram of top taxa
 ```{r heatmap of top taxa, echo=FALSE, fig.cap="\\label{fig:fig S2}Figure S2: Dendrogram of the top 100 taxa for FK left and MB right. Dissimilarity between taxa was calculated based on a Euclidean distance matrix.", fig.height=8, fig.width=10, message=FALSE, warning=FALSE}
 #pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/Supplemental/heatmap.pdf",height=10,width=7)
@@ -731,30 +993,129 @@ draw(Heatmap(data.frame(top_50_MB@.Data),row_names_gp = gpar(fontsize = 8),col=p
 #popViewport()
 #dev.off()
 ```
+
+```{r boxplot of connections and trophic level}
+boxplot(con_blue$kWithin~con_blue$trophic_lev)
+boxplot(con_dg$kWithin~con_dg$trophic_lev)
+```
+
 ####Line plots (a version of this will probably go into main document)
+```{r nice line plots}
+#install.packages("plotly")
+library(plotly)
+MB_merge_filt_t <- as.data.frame(t(MB_merge_filt))
+MB_merge_filt_t$collection_date <- rownames(MB_merge_filt_t)
+
+Otariidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Otariidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Otariidae")))
+Carangidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Carangidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Carangidae")))
+Syndiniaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Syndiniaceae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Syndiniaceae")))
+Temoridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Temoridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Temoridae")))
+#Scombridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Scombridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Scombridae")))
+#Corycaeidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Corycaeidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Corycaeidae")))
+Pelagibacteracea <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Pelagibacteracea`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Pelagibacteracea")))
+
+data_ggridges <- rbind(Otariidae,Carangidae,Temoridae,Syndiniaceae,Pelagibacteracea)
+data_ggridges$Date<-ymd(data_ggridges$Date)
+
+data_ggridges <- dplyr::arrange(data_ggridges, Date)
+DATES<-sort(data_ggridges$Date)
+referenceTimePoint<-unique(DATES)[1] #set a reference time point at a particular sample
+dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in
+data_ggridges <- cbind(data_ggridges,dayVector, DATES)
+data_ggridges$Abundance <- data_ggridges$Abundance*100
+
+library(ggplot2); library(ggridges); library(dplyr)
+# Uncount copies the row "Abundance" number of times
+Data_sum <- data_ggridges %>%
+  tidyr::uncount(Abundance)
+Data_sum$DATES <- ymd(Data_sum$DATES)
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/joyplot_dg.pdf",height=6,width=7)
+ggplot(Data_sum, aes(x = dayVector, y = Taxa,fill=Taxa)) + 
+  geom_density_ridges(scale=1.15, alpha=0.7, color="grey80",jittered_points = TRUE,
+    position = position_points_jitter(width = 0.05, height = 0),
+    point_shape = '|', point_size = 3, point_alpha = 1, alpha = 0.7) +   
+  scale_fill_manual(values = c("grey80", "grey60","grey80","grey60","grey80","grey60","grey80"), guide = "none") +
+  theme_ridges(grid = FALSE, center = TRUE) +
+  xlab("Days since April 30 2015") + ylab("")
+dev.off()
+
+#Code for trying to add points... 
+# MB_all_filt_t <- as.data.frame(t(MB_all_filt))
+# grey_points <- as.data.frame(cbind(MB_all_filt_t$`f:Otariidae`,MB_all_filt_t$`f:Carangidae`,
+#                       MB_all_filt_t$`f:Temoridae`,MB_all_filt_t$`f:Syndiniaceae`,
+#                       MB_all_filt_t$`f:Pelagibacteraceae`, MB_18S_fam@sam_data$collection_date))
+# colnames(grey_points) <- c("Otariidae", "Carangidae","Temoridae","Syndiniaceae","Pelagibacteraceae", "Date")
+# grey_points$Date<-dmy(grey_points$Date)
+# grey_points <- dplyr::arrange(grey_points, Date)
+# DATES_greypoints<-sort(grey_points$Date)
+# referenceTimePoint_greypoints<-unique(DATES_greypoints)[1] #set a reference time point at a particular sample
+# dayVector_grey<-as.numeric(DATES_greypoints-DATES_greypoints[match(referenceTimePoint_greypoints, DATES_greypoints)]) #time difference in
+# grey_points <- cbind(grey_points,dayVector_grey, DATES_greypoints)
+# #grey_points$Abundance <- grey_points$Abundance*100
+# par(mfrow=c(3,1))
+# par(mar=c(1,1,1,5))
+# par(new=TRUE)
+# plot(grey_points$dayVector_grey,grey_points$Temoridae, type="p", xaxt="n",yaxt="n", ylab="",xlab="",bty="n", pch=16, col="grey")
+
+
+Balaenopteridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Balaenopteridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Balaenopteridae")))
+Euphausiidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Euphausiidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Euphausiidae")))
+Corycaeidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Corycaeidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Corycaeidae")))
+Katablepharidaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Katablepharidaceae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Katablepharidaceae")))
+Narcomedusae <- cbind(data.frame(Abundance=MB_merge_filt_t$`o:Narcomedusae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Narcomedusae")))
+Opheliidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Opheliidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Opheliidae")))
+#Engraulidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Engraulidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Engraulidae")))
+#Calanidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Calanidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Calanidae")))
+
+
+data_ggridges_b <- rbind(Balaenopteridae,Euphausiidae,Katablepharidaceae,Narcomedusae,Opheliidae,Corycaeidae)
+
+data_ggridges_b$Date<-ymd(data_ggridges_b$Date)
+
+data_ggridges_b <- dplyr::arrange(data_ggridges_b, Date)
+DATES<-sort(data_ggridges_b$Date)
+referenceTimePoint<-unique(DATES)[1] #set a reference time point at a particular sample
+dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in
+data_ggridges_b <- cbind(data_ggridges_b,dayVector, DATES)
+data_ggridges_b$Abundance <- data_ggridges_b$Abundance*100
+
+library(ggplot2); library(ggridges); library(dplyr)
+# Uncount copies the row "Abundance" number of times
+Data_sum_b <- data_ggridges_b %>%
+  tidyr::uncount(Abundance)
+Data_sum_b$DATES <- ymd(Data_sum_b$DATES)
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/joyplot_blue.pdf",height=6,width=7)
+ggplot(Data_sum_b, aes(x = dayVector, y = Taxa,fill=Taxa)) + 
+  geom_density_ridges(scale=1.15, alpha=0.6,color="grey80",jittered_points = TRUE,
+    position = position_points_jitter(width = 0.05, height = 0),
+    point_shape = '|', point_size = 3, point_alpha = 1, alpha = 0.7) +   
+  scale_fill_manual(values = c("#00aedb", "lightblue1","#00aedb","lightblue1","#00aedb","lightblue1"), guide = "none") +
+  theme_ridges(grid = FALSE, center = TRUE)+
+  xlab("Days since April 30 2015") + ylab("")
+dev.off()
+
+```
+
 ```{r line plots, echo=FALSE, fig.cap="\\label{fig:fig 3}Figure 3: Some of the co-occuring organisms with the highest correlations from FKNMS (left) and MBNS (right).", fig.height=5.5, fig.width=5.5, message=FALSE, warning=FALSE}
-#FK_all_merge$collection_date <- ymd(FK_all_merge$collection_date)
-#FK_all_merge <- arrange(FK_all_merge, collection_date)
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/Supplemental/line_plots.pdf",height=10,width=7)
 par(mfcol=c(2,1))
 par(mar=c(1,4,3,2))
 #MB
-MB_all_merge$collection_date <- ymd(rownames(MB_all_merge))
-MB_all_merge <- arrange(MB_all_merge, collection_date)
-plot(MB_all_merge$`f:Noelaerhabdaceae`~MB_all_merge$collection_date,col="#E69F00",type="l", pch=16,lwd=2,ylab=c(""), xlab="",xaxt="n",yaxt="n",ylim=c(0,1.2))
+plot(MB_merge_filt_t$`f:Noelaerhabdaceae`~MB_merge_filt_t$collection_date,col="#E69F00",type="l", pch=16,lwd=2,ylab=c(""), xlab="",xaxt="n",yaxt="n",ylim=c(0,1.2))
 #lines(MB_all_merge$`f:Pelagibacteraceae`~MB_all_merge$collection_date, col="gold", pch=16, lwd=2)
-lines(MB_all_merge$`f:Engraulidae`~MB_all_merge$collection_date,lwd=2, col="darkorange3")
-lines(MB_all_merge$`f:Balaenopteridae`~MB_all_merge$collection_date,lwd=2, 
+lines(MB_merge_filt_t$`f:Engraulidae`~MB_merge_filt_t$collection_date,lwd=2, col="darkorange3")
+lines(MB_merge_filt_t$`f:Balaenopteridae`~MB_merge_filt_t$collection_date,lwd=2, 
 col="black")
 #lines(MB_all_merge$f.Calanidae/max(MB_all_merge$f.Calanidae)~MB_all_merge$collection_date,lwd=2, col="grey")
-legend("topleft",legend=c("Noelaerhab.", "Engraulidae","Balaenoptera"),ncol=2,col=c("darkorange3","black"), bty="n", lty=c(1,1,1), cex=0.6)
+legend("topleft",legend=c("Noelaerhab.", "Engraulidae","Balaenoptera"),ncol=2,col=c("darkorange3","#E69F00","black"), bty="n", lty=c(1,1,1), cex=0.6)
 abline(v=c(16805), col=c("black"), lty=c(2), lwd=c(1))
 par(mar=c(4,4,0,2))
-plot(MB_all_merge$`f:Paracalanidae`~MB_all_merge$collection_date, col="darkolivegreen3", pch=16, lwd=2,xlab="", xaxt="n",ylab=c(""),yaxt="n",ylim=c(0,1.2),type="l")
-lines(MB_all_merge$`f:Thalassiosiraceae`~MB_all_merge$collection_date, col="#009E73", pch=16, lwd=2)
-lines(MB_all_merge$`f:Chaetocerotaceae`~MB_all_merge$collection_date, col="darkolivegreen", pch=16, lwd=2)
-lines(MB_all_merge$`f:Clupeidae`~MB_all_merge$collection_date,lwd=2, col="grey")
-axis(1, ymd(MB_all_merge$collection_date), format(ymd(MB_all_merge$collection_date), "%b"), cex.axis = .7, las=3)
+plot(MB_merge_filt_t$`f:Paracalanidae`~MB_merge_filt_t$collection_date, col="darkolivegreen3", pch=16, lwd=2,xlab="", xaxt="n",ylab=c(""),yaxt="n",ylim=c(0,1.2),type="l")
+lines(MB_merge_filt_t$`f:Thalassiosiraceae`~MB_merge_filt_t$collection_date, col="#009E73", pch=16, lwd=2)
+lines(MB_merge_filt_t$`f:Chaetocerotaceae`~MB_merge_filt_t$collection_date, col="darkolivegreen", pch=16, lwd=2)
+lines(MB_merge_filt_t$`f:Clupeidae`~MB_merge_filt_t$collection_date,lwd=2, col="grey")
+axis(1, ymd(MB_merge_filt_t$collection_date), format(ymd(MB_merge_filt_t$collection_date), "%b"), cex.axis = .7, las=3)
 legend("topleft",legend=c("Paracalanidae", "Thalassiosir.","Chaetoceros", "Clupeidae"),col=c("darkolivegreen3","#009E73","darkolivegreen", "grey"), bty="n", ncol=2,lty=c(1,1,1), cex=0.6)
 abline(v=c(16805), col=c("black"), lty=c(2), lwd=c(1))
 mtext("2015", side=1, line=3, at=15650,cex=0.7)
@@ -764,6 +1125,7 @@ mtext("2016", side=1, line=3, at=19000,cex=0.7)
 #cor(MB_all_merge$f.Paracalanidae,MB_all_merge$f.Calanidae)
 
 ```
+
 ####Correlation matrix of top taxa
 ```{r plots of correlations, echo=FALSE, fig.cap="\\label{fig:fig S4}Figure S4: Correlation of the top 50 taxa for Monterey Bay only including significant values of a p-value equal to or less than 0.05. These correlation matrices were performed on relative abundance indices and ordered by hierarcical clustering on dissimilarities between taxa", fig.height=8, fig.width=7, message=FALSE, warning=FALSE}
 #MB
@@ -781,6 +1143,11 @@ corrplot(res2_MB, type="lower", order="hclust",
 
 ```{r Ordinations, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 MB_all_tax_df <- t(data.frame(MB_all_tax_ps_rel@otu_table))
+meta_bioenv<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/m2w_metadata_MB.csv")
+meta_bioenv<-meta_bioenv[,c(18,47,48,49,51,52)]
+bioenv <- bioenv(MB_all_tax_df, meta_bioenv)
+summary(bioenv)
+
 vegdist_MB <- vegdist(MB_all_tax_df, method="jaccard") # Bray-Curtis distances between the rows
 metaMDS_MB <- metaMDS(vegdist_MB,verbose = FALSE) # k is the number of dim
 #metaMDS_MB # view results
@@ -888,4 +1255,12 @@ legend("topleft", "B", bty="n")
                   geom_hline(aes(yintercept = 0.05), color = "red", alpha = 0.5)
                 
 
+                
+#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/Supplemental/Kendall_correlations.pdf",height=6,width=9)
+#ggplot(data=tmp, aes(y=Adjusted.P, x=Tau))+
+#                  geom_smooth()+
+#                  geom_point()+
+#                  geom_vline(aes(xintercept = 0.70), color = "red", alpha = 0.5)+
+#                  geom_hline(aes(yintercept = 0.05), color = "red", alpha = 0.5)
+#dev.off()                
 ```

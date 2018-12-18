@@ -6,7 +6,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 #knitr::opts_chunk$set(include = FALSE)
-library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq); library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro);library(ComplexHeatmap); library(circlize); library(colorspace); library(GetoptLong);library(WGCNA); library(matrixStats);library(Hmisc); library(splines);library(foreach);library(doParallel);library(fastcluster); library(dynamicTreeCut); library(survival); library(WGCNA); library(cluster); library(beepr);library(bioDist); library(FactoMineR);library(MASS); library(ggfortify); library(factoextra); library(qpcR);library(mixOmics); library(flashClust); library(ggridges)
+library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq); library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro);library(ComplexHeatmap); library(circlize); library(colorspace); library(GetoptLong);library(WGCNA); library(matrixStats);library(Hmisc); library(splines);library(foreach);library(doParallel);library(fastcluster); library(dynamicTreeCut); library(survival); library(WGCNA); library(cluster); library(beepr);library(bioDist); library(FactoMineR);library(MASS); library(ggfortify); library(factoextra); library(qpcR);library(mixOmics); library(flashClust); library(ggridges); library(plotly); library(randomForest)
 ```
 
 ```{r, include=FALSE}
@@ -535,7 +535,8 @@ dev.off()
 ModuleSignificance=tapply(GeneSignificance, moduleColors_MB, mean, na.rm=T)
 
 #STEP 5
-modules = c("#00b159", "#ffc425", "#00aedb", "#f37735", "#8c8c8c", "#d11141")
+modules = c("#00b159", "#ffc425", "#00aedb", "#f37735", "#8c8c8c","black")
+
 # Select module probes
 probes = names(as.data.frame(datExpr_MB))
 inModule = is.finite(match(moduleColors_MB, modules));
@@ -551,7 +552,7 @@ dimnames(modTOM) = list(modProbes, modProbes)
 cyt = exportNetworkToCytoscape(modTOM,
       edgeFile = paste("CytoscapeInput-edges-", paste(modules, collapse="-"), ".txt", sep=""),
       nodeFile = paste("CytoscapeInput-nodes-", paste(modules, collapse="-"), ".txt", sep=""),
-      weighted = TRUE,threshold = 0, nodeNames = modProbes, nodeAttr = moduleColors_MB[inModule])
+      weighted = TRUE,threshold = 0.2, nodeNames = modProbes, nodeAttr = moduleColors_MB[inModule])
 
 write.csv(cyt$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge.csv")
 write.csv(cyt$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node.csv")
@@ -559,7 +560,6 @@ write.csv(cyt$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/da
 #moduleColors_MB = gsub("yellow","#ffc425", gsub("blue","#00aedb", gsub("red", "#d11141", gsub("green","#00b159",gsub("brown","#f37735",gsub("turquoise","#8c8c8c",moduleColors_MB))))))
 
 ################ Choose only single module ###############
-#modules_dg = c("#8c8c8c","#00aedb");
 blue <- "#00aedb"
 
 # Select module probes
@@ -589,12 +589,21 @@ dimnames(modTOM_dg) = list(modProbes_dg, modProbes_dg)
 cyt_dg = exportNetworkToCytoscape(modTOM_dg,
       edgeFile = paste("CytoscapeInput-edges-", paste(blue, collapse="-"), ".txt", sep=""),
       nodeFile = paste("CytoscapeInput-nodes-", paste(blue, collapse="-"), ".txt", sep=""),
-      weighted = TRUE,threshold = 0, nodeNames = modProbes_dg, nodeAttr = moduleColors_MB[inModule_dg])
-
-
+      weighted = TRUE,threshold = 0.2, nodeNames = modProbes_dg, nodeAttr = moduleColors_MB[inModule_dg])
 
 write.csv(cyt_dg$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_dg.csv")
 write.csv(cyt_dg$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_dg.csv")
+
+#export all modules separately
+datExpr_MB <- as.data.frame(datExpr_MB)
+grey_MB <- names(datExpr_MB)[moduleColors_MB=="black"] #grey
+blue_MB <- names(datExpr_MB)[moduleColors_MB=="#00aedb"] #blue
+dg_MB <- names(datExpr_MB)[moduleColors_MB=="#8c8c8c"] #dark grey
+orange_MB <- names(datExpr_MB)[moduleColors_MB=="#f37735"] #orange
+green_MB <- names(datExpr_MB)[moduleColors_MB=="#00b159"] #green
+yel_MB <-names(datExpr_MB)[moduleColors_MB=="#ffc425"] #yellow
+#red_MB <- names(datExpr_MB)[moduleColors_MB=="#d11141"] #red
+write.csv(qpcR:::cbind.na(blue_MB,dg_MB,orange_MB,green_MB,yel_MB, grey_MB), file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/all_module_taxa.csv")
 
 ```
 
@@ -637,18 +646,125 @@ pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/SPLS_heatmap_darkg
 par(mar=c(1,1,1,1))
 #RdYlBu <- t(brewer.pal(11,"RdYlBu"))
 col_a <- colorRampPalette(c("#313695","#4575B4","#74ADD1","#ABD9E9","#E0F3F8","#FFFFBF","#FEE090","#FDAE61","#F46D43","#D73027","#A50026"))(90)
-cim(MB.spls_BG, comp = 1:3, xlab = "",dist.method = c("euclidean", "euclidean"),color=col_a,row.sideColors = c("#00aedb", "#8c8c8c")[as.factor(blue_grey$module)],transpose=TRUE,threshold=0.4,keysize.label = 0.7,keysize =c(1, 1),row.cex=0.8,col.cex=0.6,ylab = "",margins = c(10, 8),row.names=FALSE,col.names=c("Upwelling","Temperature","Salinity","Chl. a","Nitrate","Diss. Oxygen"))
+cim(MB.spls_BG, comp = 1:3, xlab = "",dist.method = c("euclidean", "euclidean"),color=col_a,row.sideColors = c("#00aedb", "#8c8c8c")[as.factor(blue_grey$module)],transpose=TRUE,threshold=0,keysize.label = 0.7,keysize =c(1, 1),row.cex=0.8,col.cex=0.6,ylab = "",margins = c(10, 8),row.names=FALSE,col.names=c("Upwelling","Temperature","Salinity","Chl. a","Nitrate","Diss. Oxygen"))
 dev.off()
+```
+
+```{r Random forest}
+datExpr_MB_blue <- t(subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% blue_MB[,1]))
+datExpr_MB_blue <- as.data.frame(datExpr_MB_blue)
+
+library(randomForest) # load random forest package
+
+rf_model = randomForest(datExpr_MB_blue[,1] ~ meta$upwelling + meta$temp + meta$salinity + meta$chlorophyll + meta$nitrate + meta$diss_oxygen) # train random forest model
+
+plot(rf_model) # plot of error against number of trees grown
+summary(rf_model)
+```
+
+
+####Line plots (a version of this will probably go into main document)
+```{r nice line plots}
+MB_merge_filt_t <- as.data.frame(t(MB_merge_filt))
+MB_merge_filt_t$collection_date <- rownames(MB_merge_filt_t)
+
+Otariidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Otariidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Otariidae")))
+Carangidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Carangidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Carangidae")))
+Syndiniaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Syndiniaceae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Syndiniaceae")))
+Temoridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Temoridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Temoridae")))
+#Metridinidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Metridinidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Metridinidae")))
+Rhodospirillaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Rhodospirillaceae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Rhodospirillaceae")))
+
+data_ggridges <- rbind(Otariidae,Carangidae,Temoridae,Syndiniaceae,Rhodospirillaceae)
+data_ggridges$Date<-ymd(data_ggridges$Date)
+
+data_ggridges <- dplyr::arrange(data_ggridges, Date)
+DATES<-sort(data_ggridges$Date)
+referenceTimePoint<-unique(DATES)[1] #set a reference time point at a particular sample
+dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in
+data_ggridges <- cbind(data_ggridges,dayVector, DATES)
+data_ggridges$Abundance <- data_ggridges$Abundance*100
+
+library(ggplot2); library(ggridges); library(dplyr)
+# Uncount copies the row "Abundance" number of times
+Data_sum <- data_ggridges %>%
+  tidyr::uncount(Abundance)
+Data_sum$DATES <- ymd(Data_sum$DATES)
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/joyplot_dg.pdf",height=6,width=7)
+ggplot(Data_sum, aes(x = dayVector, y = Taxa,fill=Taxa)) + 
+  geom_density_ridges(scale=1.15, alpha=0.7, color="black",jittered_points = TRUE,
+    position = position_points_jitter(width = 0.05, height = 0),
+    point_shape = '|', point_size = 3, point_alpha = 1, alpha = 0.7) +   
+  scale_fill_manual(values = c("grey80", "grey60","grey80","grey60","grey80","grey60","grey80"), guide = "none") +
+  theme_ridges(grid = FALSE, center = TRUE) +
+  xlab("Days since April 30 2015") + ylab("")
+dev.off()
+
+#Code for trying to add points... 
+# MB_all_filt_t <- as.data.frame(t(MB_all_filt))
+# grey_points <- as.data.frame(cbind(MB_all_filt_t$`f:Otariidae`,MB_all_filt_t$`f:Carangidae`,
+#                       MB_all_filt_t$`f:Temoridae`,MB_all_filt_t$`f:Syndiniaceae`,
+#                       MB_all_filt_t$`f:Pelagibacteraceae`, MB_18S_fam@sam_data$collection_date))
+# colnames(grey_points) <- c("Otariidae", "Carangidae","Temoridae","Syndiniaceae","Pelagibacteraceae", "Date")
+# grey_points$Date<-dmy(grey_points$Date)
+# grey_points <- dplyr::arrange(grey_points, Date)
+# DATES_greypoints<-sort(grey_points$Date)
+# referenceTimePoint_greypoints<-unique(DATES_greypoints)[1] #set a reference time point at a particular sample
+# dayVector_grey<-as.numeric(DATES_greypoints-DATES_greypoints[match(referenceTimePoint_greypoints, DATES_greypoints)]) #time difference in
+# grey_points <- cbind(grey_points,dayVector_grey, DATES_greypoints)
+# #grey_points$Abundance <- grey_points$Abundance*100
+# par(mfrow=c(3,1))
+# par(mar=c(1,1,1,5))
+# par(new=TRUE)
+# plot(grey_points$dayVector_grey,grey_points$Temoridae, type="p", xaxt="n",yaxt="n", ylab="",xlab="",bty="n", pch=16, col="grey")
+
+
+Balaenopteridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Balaenopteridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Balaenopteridae")))
+Euphausiidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Euphausiidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Euphausiidae")))
+#Corycaeidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Corycaeidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Corycaeidae")))
+Bougainvilliidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Bougainvilliidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Bougainvilliidae")))
+Puniceicoccaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Puniceicoccaceae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Puniceicoccaceae")))
+Urechidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Urechidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Urechidae")))
+Sugiuridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Sugiuridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Sugiuridae")))
+#Calanidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Calanidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Calanidae")))
+
+
+data_ggridges_b <- rbind(Balaenopteridae,Euphausiidae,Urechidae,Sugiuridae,Puniceicoccaceae)
+data_ggridges_b$Date<-ymd(data_ggridges_b$Date)
+
+data_ggridges_b <- dplyr::arrange(data_ggridges_b, Date)
+DATES<-sort(data_ggridges_b$Date)
+referenceTimePoint<-unique(DATES)[1] #set a reference time point at a particular sample
+dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in
+data_ggridges_b <- cbind(data_ggridges_b,dayVector, DATES)
+data_ggridges_b$Abundance <- data_ggridges_b$Abundance*100
+
+library(ggplot2); library(ggridges); library(dplyr)
+# Uncount copies the row "Abundance" number of times
+Data_sum_b <- data_ggridges_b %>%
+  tidyr::uncount(Abundance)
+Data_sum_b$DATES <- ymd(Data_sum_b$DATES)
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/joyplot_blue.pdf",height=6,width=7)
+ggplot(Data_sum_b, aes(x = dayVector, y = Taxa,fill=Taxa)) + 
+  geom_density_ridges(scale=1.15, alpha=0.6,color="black",jittered_points = TRUE,
+    position = position_points_jitter(width = 0.05, height = 0),
+    point_shape = '|', point_size = 3, point_alpha = 1, alpha = 0.7) +   
+  scale_fill_manual(values = c("#00aedb", "lightblue1","#00aedb","lightblue1","#00aedb","lightblue1"), guide = "none") + theme_ridges(grid = FALSE, center = TRUE)+
+  xlab("Days since April 30 2015") + ylab("")
+dev.off()
+
 ```
 
 ```{r pie charts of trophic levels}
 trophic_blue <- c(9, 27, 8, 36, 1)
 trophic_blue <- prop.table(trophic_blue)*100
-labels_blue <- c("Detritivores (11.0%)", "Autotrophs (33.3%)", "Mixotrophs (9.8%)", "Heterotrophs (44.4%)","Tertiary consumers (1.2%)")
+labels_blue <- c("Saprotrophs (11.0%)", "Autotrophs (33.3%)", "Primary consumers (9.8%)", "Secondary consumers (44.4%)","Tertiary consumers (1.2%)")
 
 trophic_grey <- c(26, 20, 12, 55, 1)
 trophic_grey <- prop.table(trophic_grey)*100
-labels_grey <- c("Bacteria/Archaea/Fungi (22.8%)", "Primary producers (17.5%)", "Primary consumers (10.5%)", "Secondary consumers (48.2%)","Tertiary consumers (0.9%)")
+labels_grey <- c("Saprotrophs (22.8%)", "Autotrophs (17.5%)", "Primary consumers (10.5%)", "Secondary consumers (48.2%)","Tertiary consumers (0.9%)")
 
 # Plot the chart.
 pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/trophic_pie_blue.pdf", height=5, width=7)
@@ -694,29 +810,38 @@ par(mfrow=c(1,2))
 par(mar=c(4,4,3,2.7))
 df_blue <- data.frame(cor_blue$temp,con_blue$kWithin,con_blue$trophic_lev)
 plot(df_blue$cor_blue.temp,df_blue$con_blue.kWithin,cex.axis=0.8,pch=c(15,23,16,17,25)[as.factor(df_blue$con_blue.trophic_lev)],ylim=c(-1.0,18), col="#00aedb",bg="#00aedb",ylab="Intra-network connectivity",xlab="Correlation w/ Temperature")
-lm_blue <- lm(con_blue.kWithin~cor_blue.temp, data=df_blue)
+#lm_blue <- lm(con_blue.kWithin~cor_blue.temp, data=df_blue)
+lm_blue <- nls(con_blue.kWithin ~ exp(a + b * cor_blue.temp), data = df_blue, start = list(a = 0, b = 0))
+#summary(lm_blue)
 newblue <- seq(min(df_blue$cor_blue.temp), max(df_blue$cor_blue.temp), 0.001)
 pre_blue <- predict(lm_blue, newdata=data.frame(cor_blue.temp=newblue), interval="confidence")
-lines(newblue, pre_blue[,1], lty=1,col="grey50")
-lines(newblue, pre_blue[,2], lty=2,col="grey50")
-lines(newblue, pre_blue[,3], lty=2, col="grey50")
-abline(v=0.4, lwd=2, col="orangered", lty=2)
+lines(newblue,pre_blue, lty=2,col="grey50")
+#newblue <- seq(min(df_blue$cor_blue.temp), max(df_blue$cor_blue.temp), 0.001)
+#pre_blue <- predict(lm_blue, newdata=data.frame(cor_blue.temp=newblue), interval="confidence")
+#lines(newblue, pre_blue[,2], lty=2,col="grey50")
+#lines(newblue, pre_blue[,3], lty=2, col="grey50")
+#abline(v=0.4, lwd=2, col="orangered", lty=2)
 abline(h=15, lwd=2,col="orangered", lty=2)
-legend("topright", legend=substitute(paste(r, " = ", r2,", p<0.001"), list(r2 = round(summary(lm_blue)$adj.r.squared, digits=2))),cex=0.9,bty="n")
+#legend("topright", legend=substitute(paste(r, " = ", r2,", p<0.001"), list(r2 = round(summary(lm_blue)$adj.r.squared, digits=2))),cex=0.9,bty="n")
 #legend("toplef", legend="B", bty="n", cex=0.9)
 
 par(mar=c(4,2.7,3,4))
 df_dg <- data.frame(cor_dg$chlorophyll,con_dg$kWithin, con_dg$trophic_lev)
 plot(df_dg$cor_dg.chlorophyll,df_dg$con_dg.kWithin,bg="#8c8c8c",pch=c(15,23,16,17,25)[as.factor(df_dg$con_dg.trophic_lev)],ylim=c(0.5,35),cex.axis=0.8,ylab="",col="#8c8c8c", xlab="Correlation w/ Chlorophyll a")
-lm_dg <- lm(con_dg.kWithin~cor_dg.chlorophyll, data=df_dg)
+lm_dg <- nls(con_dg.kWithin ~ exp(a + b * cor_dg.chlorophyll), data = df_dg, start = list(a = 0, b = 0))
+summary(lm_dg)
 newdg <- seq(min(df_dg$cor_dg.chlorophyll), max(df_dg$cor_dg.chlorophyll), 0.001)
 pre_dg <- predict(lm_dg, newdata=data.frame(cor_dg.chlorophyll=newdg), interval="confidence")
-lines(newdg, pre_dg[,1], lty=1,col="grey50")
-lines(newdg, pre_dg[,2], lty=2,col="grey50")
-lines(newdg, pre_dg[,3], lty=2, col="grey50")
-abline(v=-0.4, lwd=2, col="orangered", lty=2)
+lines(newdg,pre_dg, lty=2,col="grey50")
+#lm_dg <- lm(con_dg.kWithin~cor_dg.chlorophyll, data=df_dg)
+#newdg <- seq(min(df_dg$cor_dg.chlorophyll), max(df_dg$cor_dg.chlorophyll), 0.001)
+#pre_dg <- predict(lm_dg, newdata=data.frame(cor_dg.chlorophyll=newdg), interval="confidence")
+#lines(newdg, pre_dg[,1], lty=1,col="grey50")
+#lines(newdg, pre_dg[,2], lty=2,col="grey50")
+#lines(newdg, pre_dg[,3], lty=2, col="grey50")
+#abline(v=-0.4, lwd=2, col="orangered", lty=2)
 abline(h=32.5, lwd=2,col="orangered", lty=2)
-legend("topright",legend=substitute(paste(r, " = ", r2,", p<0.001"), list(r2 = round(summary(lm_dg)$adj.r.squared, digits=2))), cex=0.9, bty="n")
+#legend("topright",legend=substitute(paste(r, " = ", r2,", p<0.001"), list(r2 = round(summary(lm_dg)$adj.r.squared, digits=2))), cex=0.9, bty="n")
 #legend("toplef", legend="C", bty="n", cex=0.9)
 dev.off()
 
@@ -803,16 +928,6 @@ plot(capscale, main="capscale")
 
 ###Pseudoautocorrelation of modules
 ```{r pseudo autocorrelation of all module MB,echo=FALSE,message=FALSE, warning=FALSE}
-datExpr_MB <- as.data.frame(datExpr_MB)
-grey_MB <- names(datExpr_MB)[moduleColors_MB=="black"] #grey
-blue_MB <- names(datExpr_MB)[moduleColors_MB=="#00aedb"] #blue
-dg_MB <- names(datExpr_MB)[moduleColors_MB=="#8c8c8c"] #dark grey
-orange_MB <- names(datExpr_MB)[moduleColors_MB=="#f37735"] #orange
-green_MB <- names(datExpr_MB)[moduleColors_MB=="#00b159"] #green
-yel_MB <-names(datExpr_MB)[moduleColors_MB=="#ffc425"] #yellow
-#red_MB <- names(datExpr_MB)[moduleColors_MB=="#d11141"] #red
-write.csv(qpcR:::cbind.na(blue_MB,dg_MB,orange_MB,green_MB,yel_MB, grey_MB), file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/all_module_taxa.csv")
-
 #filter out desired color module
 MB_taxa_yel = prune_taxa(yel_MB,MB_all_filt)
 yel_otu_MB<-otu_table(MB_taxa_yel)
@@ -997,105 +1112,6 @@ draw(Heatmap(data.frame(top_50_MB@.Data),row_names_gp = gpar(fontsize = 8),col=p
 ```{r boxplot of connections and trophic level}
 boxplot(con_blue$kWithin~con_blue$trophic_lev)
 boxplot(con_dg$kWithin~con_dg$trophic_lev)
-```
-
-####Line plots (a version of this will probably go into main document)
-```{r nice line plots}
-#install.packages("plotly")
-library(plotly)
-MB_merge_filt_t <- as.data.frame(t(MB_merge_filt))
-MB_merge_filt_t$collection_date <- rownames(MB_merge_filt_t)
-
-Otariidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Otariidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Otariidae")))
-Carangidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Carangidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Carangidae")))
-Syndiniaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Syndiniaceae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Syndiniaceae")))
-Temoridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Temoridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Temoridae")))
-#Scombridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Scombridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Scombridae")))
-#Corycaeidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Corycaeidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Corycaeidae")))
-Pelagibacteracea <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Pelagibacteracea`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Pelagibacteracea")))
-
-data_ggridges <- rbind(Otariidae,Carangidae,Temoridae,Syndiniaceae,Pelagibacteracea)
-data_ggridges$Date<-ymd(data_ggridges$Date)
-
-data_ggridges <- dplyr::arrange(data_ggridges, Date)
-DATES<-sort(data_ggridges$Date)
-referenceTimePoint<-unique(DATES)[1] #set a reference time point at a particular sample
-dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in
-data_ggridges <- cbind(data_ggridges,dayVector, DATES)
-data_ggridges$Abundance <- data_ggridges$Abundance*100
-
-library(ggplot2); library(ggridges); library(dplyr)
-# Uncount copies the row "Abundance" number of times
-Data_sum <- data_ggridges %>%
-  tidyr::uncount(Abundance)
-Data_sum$DATES <- ymd(Data_sum$DATES)
-
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/joyplot_dg.pdf",height=6,width=7)
-ggplot(Data_sum, aes(x = dayVector, y = Taxa,fill=Taxa)) + 
-  geom_density_ridges(scale=1.15, alpha=0.7, color="grey80",jittered_points = TRUE,
-    position = position_points_jitter(width = 0.05, height = 0),
-    point_shape = '|', point_size = 3, point_alpha = 1, alpha = 0.7) +   
-  scale_fill_manual(values = c("grey80", "grey60","grey80","grey60","grey80","grey60","grey80"), guide = "none") +
-  theme_ridges(grid = FALSE, center = TRUE) +
-  xlab("Days since April 30 2015") + ylab("")
-dev.off()
-
-#Code for trying to add points... 
-# MB_all_filt_t <- as.data.frame(t(MB_all_filt))
-# grey_points <- as.data.frame(cbind(MB_all_filt_t$`f:Otariidae`,MB_all_filt_t$`f:Carangidae`,
-#                       MB_all_filt_t$`f:Temoridae`,MB_all_filt_t$`f:Syndiniaceae`,
-#                       MB_all_filt_t$`f:Pelagibacteraceae`, MB_18S_fam@sam_data$collection_date))
-# colnames(grey_points) <- c("Otariidae", "Carangidae","Temoridae","Syndiniaceae","Pelagibacteraceae", "Date")
-# grey_points$Date<-dmy(grey_points$Date)
-# grey_points <- dplyr::arrange(grey_points, Date)
-# DATES_greypoints<-sort(grey_points$Date)
-# referenceTimePoint_greypoints<-unique(DATES_greypoints)[1] #set a reference time point at a particular sample
-# dayVector_grey<-as.numeric(DATES_greypoints-DATES_greypoints[match(referenceTimePoint_greypoints, DATES_greypoints)]) #time difference in
-# grey_points <- cbind(grey_points,dayVector_grey, DATES_greypoints)
-# #grey_points$Abundance <- grey_points$Abundance*100
-# par(mfrow=c(3,1))
-# par(mar=c(1,1,1,5))
-# par(new=TRUE)
-# plot(grey_points$dayVector_grey,grey_points$Temoridae, type="p", xaxt="n",yaxt="n", ylab="",xlab="",bty="n", pch=16, col="grey")
-
-
-Balaenopteridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Balaenopteridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Balaenopteridae")))
-Euphausiidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Euphausiidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Euphausiidae")))
-Corycaeidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Corycaeidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Corycaeidae")))
-Katablepharidaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Katablepharidaceae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Katablepharidaceae")))
-Narcomedusae <- cbind(data.frame(Abundance=MB_merge_filt_t$`o:Narcomedusae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Narcomedusae")))
-Opheliidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Opheliidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Opheliidae")))
-#Engraulidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Engraulidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Engraulidae")))
-#Calanidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Calanidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Calanidae")))
-
-
-data_ggridges_b <- rbind(Balaenopteridae,Euphausiidae,Katablepharidaceae,Narcomedusae,Opheliidae,Corycaeidae)
-
-data_ggridges_b$Date<-ymd(data_ggridges_b$Date)
-
-data_ggridges_b <- dplyr::arrange(data_ggridges_b, Date)
-DATES<-sort(data_ggridges_b$Date)
-referenceTimePoint<-unique(DATES)[1] #set a reference time point at a particular sample
-dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in
-data_ggridges_b <- cbind(data_ggridges_b,dayVector, DATES)
-data_ggridges_b$Abundance <- data_ggridges_b$Abundance*100
-
-library(ggplot2); library(ggridges); library(dplyr)
-# Uncount copies the row "Abundance" number of times
-Data_sum_b <- data_ggridges_b %>%
-  tidyr::uncount(Abundance)
-Data_sum_b$DATES <- ymd(Data_sum_b$DATES)
-
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/joyplot_blue.pdf",height=6,width=7)
-ggplot(Data_sum_b, aes(x = dayVector, y = Taxa,fill=Taxa)) + 
-  geom_density_ridges(scale=1.15, alpha=0.6,color="grey80",jittered_points = TRUE,
-    position = position_points_jitter(width = 0.05, height = 0),
-    point_shape = '|', point_size = 3, point_alpha = 1, alpha = 0.7) +   
-  scale_fill_manual(values = c("#00aedb", "lightblue1","#00aedb","lightblue1","#00aedb","lightblue1"), guide = "none") +
-  theme_ridges(grid = FALSE, center = TRUE)+
-  xlab("Days since April 30 2015") + ylab("")
-dev.off()
-
 ```
 
 ```{r line plots, echo=FALSE, fig.cap="\\label{fig:fig 3}Figure 3: Some of the co-occuring organisms with the highest correlations from FKNMS (left) and MBNS (right).", fig.height=5.5, fig.width=5.5, message=FALSE, warning=FALSE}

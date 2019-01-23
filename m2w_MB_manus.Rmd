@@ -512,15 +512,22 @@ rich_all_mod <- rbind(yel_rich,blue_rich,green_rich,orange_rich,dg_rich, black)
 
 pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/module_richness_time.pdf", height=4, width=4.5)
 par(mar=c(3,4,1,4))
-barplot(rich_all_mod, col=color, cex.axis=0.8,cex.lab=0.8, space=c(0.5,2,2,1,3,3,0,2),cex=0.8, ylab="Number of taxa per module", xlab="", xaxt="n",ylim=c(0,125))
+barplot(rich_all_mod, border = NA, axes = FALSE,col="white", cex.axis=0.8,cex.lab=0.8, space=c(0.5,2,2,1,3,3,0,2),cex=0.8, ylab="", xlab="", xaxt="n",ylim=c(0,125))
+rect(-0.5, 120,2.5,-5,col = "gray85", density=NA)
+rect(5.5, 120,8.5,-5,col = "gray85", density=NA)
+rect(11.5, 120,14.5,-5,col = "gray85", density=NA)
+rect(17.5, 120,20.5,-5,col = "gray85", density=NA)
+par(new=TRUE)
+#env_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/MBNMS_GHRSST_15_16.csv", header=TRUE)
+#par(new=TRUE)
+#plot(env_MB$Mean.SST~dmy(env_MB$Date),type="l",ylim=c(12,18), lwd=2,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey40"), lty=2)
+#axis(side=4, cex.axis=0.8)
+#mtext("Sea surface temperature",side=4,line=1.9,las=3, cex=0.8)
+#par(new=TRUE)
+barplot(rich_all_mod, col=color, cex.axis=0.8,cex.lab=0.8, space=c(0.5,2,2,1,3,3,0,2),cex=0.8, ylab="Number of taxa per subnetwork", xlab="", xaxt="n",ylim=c(0,125))
 axis(side=1, at=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21),
  labels=c("Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec", "Jan", "Feb","Mar",
             "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"), las=3,cex.axis=0.7)
-env_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/MBNMS_GHRSST_15_16.csv", header=TRUE)
-par(new=TRUE)
-plot(env_MB$Mean.SST~dmy(env_MB$Date),type="l",ylim=c(12,18), lwd=1,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey40"), lty=2)
-axis(side=4, cex.axis=0.8)
-mtext("Sea surface temperature",side=4,line=1.9,las=3, cex=0.8)
 dev.off()
 
 chooseTopHubInEachModule(datExpr_MB,moduleColors_MB, omitColors = "", power = 22,type = "unsigned")
@@ -622,8 +629,12 @@ blue_grey <- rbind(blue_MB,dg_MB)
 blue_grey_taxa <- blue_grey[,1]
 datExpr_MB_BG <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% blue_grey_taxa)
 write.csv(datExpr_MB_BG, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/datExpr_MB_BG.csv")
+trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
 
 blue_grey <- blue_grey[match(rownames(datExpr_MB_BG), blue_grey$taxa),]
+blue_grey$trophic_level <- trophic_lev$trophic_fv[match(blue_grey$taxa, trophic_lev$taxa)]
+blue_grey$Rank <- trophic_lev$Rank1[match(blue_grey$taxa, trophic_lev$taxa)]
+
 datExpr_MB_BG <- t(datExpr_MB_BG)
 
 head(cbind(rownames(datExpr_MB_BG), rownames(meta)))
@@ -650,6 +661,43 @@ cim(MB.spls_BG, comp = 1:3, xlab = "",dist.method = c("euclidean", "euclidean"),
 dev.off()
 ```
 
+
+```{r SPLS for additional networks}
+green_MB <- data.frame(names(datExpr_MB)[moduleColors_MB=="#00b159"]) 
+green_MB$module <- "3"
+names(green_MB) <- c("taxa","module")
+#green_MB <- green_MB[,1]
+
+yellow_MB <- data.frame(names(datExpr_MB)[moduleColors_MB=="#ffc425"])
+yellow_MB$module <- "4"
+names(yellow_MB) <- c("taxa","module")
+#yellow_MB <- yellow_MB[,1]
+
+orange_MB <- data.frame(names(datExpr_MB)[moduleColors_MB=="#f37735"]) 
+orange_MB$module <- "5"
+names(orange_MB) <- c("taxa","module")
+#orange_MB <- orange_MB[,1]
+
+black_MB <- data.frame(names(datExpr_MB)[moduleColors_MB=="black"]) 
+black_MB$module <- "6"
+names(black_MB) <- c("taxa","module")
+#black_MB <- black_MB[,1]
+
+gr_yel_ora_bl <- rbind(green_MB,yellow_MB,orange_MB,black_MB)
+gr_yel_ora_bl_taxa <- gr_yel_ora_bl[,1]
+gr_yel_ora_bl_MB <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% gr_yel_ora_bl_taxa)
+gr_yel_ora_bl <- gr_yel_ora_bl[match(rownames(gr_yel_ora_bl_MB), gr_yel_ora_bl$taxa),]
+
+gr_yel_ora_bl_MB <- t(gr_yel_ora_bl_MB)
+MB.spls_gr_yel_ora_bl <- spls(gr_yel_ora_bl_MB, meta, ncomp = 6, mode = "regression")
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/SPLS_heatmap_gr_yel_ora_bla.pdf", height=6, width=9)
+par(mar=c(1,1,1,1))
+cim(MB.spls_gr_yel_ora_bl, comp = 1:3, xlab = "",dist.method = c("euclidean", "euclidean"),row.sideColors = c("#00b159", "#ffc425","#f37735","black")[as.factor(gr_yel_ora_bl$module)], color=col_a,transpose=TRUE,threshold=0,keysize.label = 0.7,keysize =c(1, 1),row.cex=0.8,col.cex=0.6,ylab = "",margins = c(10, 8),row.names=FALSE,col.names=c("Upwelling","Temperature","Salinity","Chl. a","Nitrate","Diss. Oxygen"))
+dev.off()
+```
+
+
 ```{r Random forest}
 datExpr_MB_blue <- t(subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% blue_MB[,1]))
 datExpr_MB_blue <- as.data.frame(datExpr_MB_blue)
@@ -661,7 +709,6 @@ rf_model = randomForest(datExpr_MB_blue[,1] ~ meta$upwelling + meta$temp + meta$
 plot(rf_model) # plot of error against number of trees grown
 summary(rf_model)
 ```
-
 
 ####Line plots (a version of this will probably go into main document)
 ```{r nice line plots}
@@ -790,6 +837,7 @@ con$taxa <- rownames(t(datExpr_MB))
 blue_MB <- blue_MB[,1]
 con_blue <- con[con$taxa %in% blue_MB, ]
 write.csv(con_blue, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_blue.csv")
+trophic <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
 trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
 con_blue$trophic_lev <- trophic_lev$trophic_fv[match(con_blue$taxa, trophic_lev$taxa)]
 dg_MB <- dg_MB[,1]
@@ -929,7 +977,7 @@ plot(capscale, main="capscale")
 ###Pseudoautocorrelation of modules
 ```{r pseudo autocorrelation of all module MB,echo=FALSE,message=FALSE, warning=FALSE}
 #filter out desired color module
-MB_taxa_yel = prune_taxa(yel_MB,MB_all_filt)
+MB_taxa_yel = prune_taxa(yel_MB, MB_all_filt)
 yel_otu_MB<-otu_table(MB_taxa_yel)
 dates_MB<-dmy(sample_data(MB_all_tax_ps_rel)$collection_date)
 

@@ -184,6 +184,71 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     }
   }
 }
+
+
+strong.corrs.plot <- function(z, 
+                              cutoff = 0.6, 
+                              trophicLevels = trophic$trophic_fv[match(colnames(z), trophic$taxa)],
+                              plotcount = 0) {  #for dataframe z, cutoff value of critical tau, and defined trophic levels (for color)
+
+  #optional function to define colors to be used
+  gg_color <- function(n, alpha = 0.5) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100, alpha = alpha)[1:n]
+  }
+  trophicColors <- RColorBrewer::brewer.pal(length(unique(trophicLevels)), "YlGnBu")[match(trophicLevels, unique(trophicLevels))]
+  #trophicColors <- gg_color(length(unique(trophicLevels)))[match(trophicLevels, unique(trophicLevels))]
+  
+  trophic.yvec <- unlist(lapply(1:ncol(z), function(w){rep(trophicColors[w], times = (ncol(z)-w))}))  
+  trophic.xvec <- unlist(lapply(2:ncol(z), function(w){trophicColors[w:ncol(z)]}))
+  
+panel.cor <- function(x, y)
+{
+  plotcount <<- plotcount + 1
+    #usr <- par("usr"); on.exit(par(usr))
+    #par(usr = c(0, 1, 0, 1))
+	if(abs(cor(x,y, method = "kendall"))<cutoff) NULL else {
+	           ll <- par("usr") 
+            	  polygon(c(ll[1],ll[2],ll[2]), 
+            	          c(ll[3], ll[4],ll[3]), 
+            	          border = NA, col = trophic.xvec[plotcount])
+            	  polygon(c(ll[1],ll[2],ll[1]), 
+            	          c(ll[3], ll[4],ll[4]), 
+            	          border = NA, col = trophic.yvec[plotcount])
+            	  points(y ~ x, pch = 19)}
+  }
+
+panel.smooth.cor <- function (x, y, col = par("col"), bg = NA, pch = par("pch"), 
+    cex = 1, col.smooth = "steelblue1", span = .9, iter = 3, ...) 
+{
+    if (abs(cor(x, y, method = "kendall"))<cutoff) NULL else {
+		    points(x, y, pch = pch, col = col, bg = bg, cex = cex)
+		    ok <- is.finite(x) & is.finite(y)
+		    if (any(ok)) 
+		        lines(stats::lowess(x[ok], y[ok], f = span, iter = iter), 
+		            col = col.smooth, lwd = 2, ...)    	
+    }
+}
+
+diag.count<-0
+mydiag.panel <- function(x, ...){
+  diag.count<<-diag.count+1
+    ll <- par("usr") 
+  rect(ll[1], ll[3], ll[2], ll[4], col=trophicColors[diag.count]) 
+  }
+
+
+pairs(z, 
+      lower.panel = panel.smooth.cor, 
+      upper.panel = panel.cor, 
+      diag.panel = mydiag.panel, 
+      label.pos = 0.5, 
+      labels = sapply(colnames(z), function(w) strsplit(w, ":")[[1]][2]),
+      cex.labels = 0.9
+      )
+
+}
+
 ```
 
 ```{r transform sample abundance to proportion and make one dataframe per location, include=FALSE, echo=FALSE, warning=FALSE}
@@ -451,7 +516,7 @@ plotMEpairs(MET)
 
 moduleTraitCor_MB = cor(MET, datTraits_MB, use = "p", method="spearman");
 moduleTraitPvalue_MB = corPvalueStudent(moduleTraitCor_MB, nSamples_MB);
-#a <- p.adjust(moduleTraitPvalue_MB, method="bonferroni")
+a <- p.adjust(moduleTraitPvalue_MB, method="holm", n=36)
 
 # Will display correlations and their p-values
 textMatrix_MB =  paste(signif(moduleTraitCor_MB, 2), "\n(",
@@ -518,7 +583,7 @@ rect(5.5, 120,8.5,-5,col = "gray85", density=NA)
 rect(11.5, 120,14.5,-5,col = "gray85", density=NA)
 rect(17.5, 120,20.5,-5,col = "gray85", density=NA)
 par(new=TRUE)
-#env_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/MBNMS_GHRSST_15_16.csv", header=TRUE)
+env_MB <- read.csv("/Users/anni_djurhuus/Documents/Projects/MBON/m2w/env_data/MBNMS_GHRSST_15_16.csv", header=TRUE)
 #par(new=TRUE)
 #plot(env_MB$Mean.SST~dmy(env_MB$Date),type="l",ylim=c(12,18), lwd=2,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey40"), lty=2)
 #axis(side=4, cex.axis=0.8)
@@ -661,7 +726,6 @@ cim(MB.spls_BG, comp = 1:3, xlab = "",dist.method = c("euclidean", "euclidean"),
 dev.off()
 ```
 
-
 ```{r SPLS for additional networks}
 green_MB <- data.frame(names(datExpr_MB)[moduleColors_MB=="#00b159"]) 
 green_MB$module <- "3"
@@ -697,7 +761,6 @@ cim(MB.spls_gr_yel_ora_bl, comp = 1:3, xlab = "",dist.method = c("euclidean", "e
 dev.off()
 ```
 
-
 ```{r Random forest}
 datExpr_MB_blue <- t(subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% blue_MB[,1]))
 datExpr_MB_blue <- as.data.frame(datExpr_MB_blue)
@@ -713,6 +776,7 @@ summary(rf_model)
 ####Line plots (a version of this will probably go into main document)
 ```{r nice line plots}
 MB_merge_filt_t <- as.data.frame(t(MB_merge_filt))
+write.csv(MB_merge_filt_t, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/merge_filt_t.csv")
 MB_merge_filt_t$collection_date <- rownames(MB_merge_filt_t)
 
 Otariidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Otariidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Otariidae")))
@@ -730,7 +794,7 @@ DATES<-sort(data_ggridges$Date)
 referenceTimePoint<-unique(DATES)[1] #set a reference time point at a particular sample
 dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in
 data_ggridges <- cbind(data_ggridges,dayVector, DATES)
-data_ggridges$Abundance <- data_ggridges$Abundance*100
+data_ggridges$Abundance <- data_ggridges$Abundance*500
 
 library(ggplot2); library(ggridges); library(dplyr)
 # Uncount copies the row "Abundance" number of times
@@ -785,7 +849,7 @@ DATES<-sort(data_ggridges_b$Date)
 referenceTimePoint<-unique(DATES)[1] #set a reference time point at a particular sample
 dayVector<-as.numeric(DATES-DATES[match(referenceTimePoint, DATES)]) #time difference in
 data_ggridges_b <- cbind(data_ggridges_b,dayVector, DATES)
-data_ggridges_b$Abundance <- data_ggridges_b$Abundance*100
+data_ggridges_b$Abundance <- data_ggridges_b$Abundance*1000
 
 library(ggplot2); library(ggridges); library(dplyr)
 # Uncount copies the row "Abundance" number of times
@@ -801,7 +865,6 @@ ggplot(Data_sum_b, aes(x = dayVector, y = Taxa,fill=Taxa)) +
   scale_fill_manual(values = c("#00aedb", "lightblue1","#00aedb","lightblue1","#00aedb","lightblue1"), guide = "none") + theme_ridges(grid = FALSE, center = TRUE)+
   xlab("Days since April 30 2015") + ylab("")
 dev.off()
-
 ```
 
 ```{r pie charts of trophic levels}
@@ -1075,6 +1138,54 @@ MB_taxa_black = prune_taxa(grey_MB,MB_merge_filt)
 black_otu_MB<-otu_table(MB_taxa_black)
 ave_black_otu_MB <- colMeans(black_otu_MB)
 plot(ave_black_otu_MB~ dmy(traitData_MB$collection_date), type="l",lwd=2.5,col="black",ylab="Relative abundance")
+
+
+### plot by centric, pennate, and dinoflagellates
+diatoms <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnettroph_AD.csv")
+
+centric = subset(diatoms, group_added == "centric_diatom")
+centric <- prune_taxa(centric$taxa,MB_merge_filt)
+centric_ave <- colMeans(centric)
+
+pennate = subset(diatoms, group_added == "pennate_diatom")
+pennate <- prune_taxa(pennate$taxa,MB_merge_filt)
+pennate_ave <- colMeans(pennate)
+
+dinos = subset(diatoms, group_added == "dinoflagellates")
+dinos <- prune_taxa(dinos$taxa,MB_merge_filt)
+dinos_ave <- colMeans(dinos)
+
+copepod = subset(diatoms, group_added == "copepod")
+copepod <- prune_taxa(copepod$taxa,MB_merge_filt)
+copepod_ave <- colMeans(copepod)
+
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/diatom_dino.pdf",height=5,width=6)
+par(mar=c(6,4,3,3))
+plot(env_MB$Mean.SST~dmy(env_MB$Date),type="n",ylim=c(10,19), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
+subdate <- c(ydm("2013-20-01"),dmy(env_MB$Date),ydm("2020-31-01"))
+sub.sst <- c(0,env_MB$Mean.SST,0)
+axis(side=4)
+mtext("Sea surface temperature",side=4,line=1.9,las=3)
+polygon(subdate, sub.sst, col='gray90', border=NA, density=30) 
+par(new=TRUE)
+#all <- prop.table(rbind(centric_ave,pennate_ave,dinos_ave,copepod_ave), margin=2)
+#barplot(all, col=c("#a8ddb5","#2ca25f","#feb24c","grey40"), las=2)
+plot(centric_ave~ dmy(traitData_MB$collection_date),ylim=c(0,0.8), type="l",lwd=2.5,col="#a8ddb5",ylab="Relative abundance", xaxt="n", xlab="")
+axis.Date(1,at=dmy(traitData_MB$collection_date),labels=format(dmy(traitData_MB$collection_date),"%b-%d"),las=2)
+lines(pennate_ave~ dmy(traitData_MB$collection_date), col="#2ca25f",lwd=2.5)
+lines(dinos_ave~ dmy(traitData_MB$collection_date), col="#feb24c",lwd=2.5)
+lines(copepod_ave~ dmy(traitData_MB$collection_date), col="grey40",lwd=2.5)
+legend("topright",legend=c("Centric diatoms", "Pennate diatoms","Dinoflagellates","Copepods"),ncol=2,col=c("#a1d99b","#2ca25f","#feb24c","black"), bty="n", lty=c(1,1,1,1), cex=0.7)
+dev.off()
+
+centric_rich <- specnumber(t(centric))
+pennate_rich <- specnumber(t(pennate))
+dino_rich <- specnumber(t(dinos))
+copepod_rich <- specnumber(t(copepod))
+phyto_rich <- rbind(centric_rich,pennate_rich,dino_rich,copepod_rich)
+barplot(prop.table(phyto_rich, margin=2), las=2, col=c("#a8ddb5","#2ca25f","#feb24c","grey40"))
+
 ```
 
 ```{r lag analysis, eval=FALSE, include=FALSE}
@@ -1328,3 +1439,199 @@ legend("topleft", "B", bty="n")
 #                  geom_hline(aes(yintercept = 0.05), color = "red", alpha = 0.5)
 #dev.off()                
 ```
+
+```{r strong correlation plots}
+gt <- as.character(c("f:Otariidae","f:Carangidae","f:Ellobiopsidae","f:Syndiniaceae","f:Pelagibacteraceae","f:Metridinidae","f:Rhodospirillaceae"))
+gt = prune_taxa(gt,MB_all_filt)
+
+
+foo_gt <-otu_table(gt) %>%
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  gather(sample, reads, -rowname) %>% 
+  mutate(sample = substr(sample,1,12)) %>% 
+  group_by(sample,rowname) %>% 
+  summarise(index.mean = mean(reads))
+names(foo_gt) <- c("sample","family","index.mean")
+
+tidy.gt<-foo_gt %>% 
+  mutate(rn = row_number()) %>% 
+  spread(sample, index.mean, fill = 0)
+tidy.gt<-tidy.gt[,-2]
+tidy.gt <- as.data.frame(tidy.gt)
+tidy.gt <- Col2RN(tidy.gt,1)
+
+tidy.gt <-tidy.gt[which(apply(tidy.gt, MARGIN = 1, FUN = function(x) sum(x>0)) > 1),] #filter for taxa occurring more than 3 times in 8 time points
+
+cor.mat.gt <- cor(t(tidy.gt), method = "kendall")
+diag(cor.mat.gt)<-0
+
+cor.tidy_gt <- cor.mat.gt %>% 
+  as.data.frame %>% 
+  rownames_to_column("Fam1") %>% 
+  gather(key = Fam2, value = corr, -Fam1) %>% 
+  filter(corr > 0)
+strongCorrs_gt <- unique(unlist(cor.tidy_gt[,1:2]))  #which families have really strong correlations?
+
+heatmap.2(abs(cor.mat.gt[strongCorrs_gt, strongCorrs_gt]),dendrogram='none', Rowv=FALSE, Colv=FALSE,trace='none')
+
+z_gt <- t(tidy.gt[strongCorrs_gt,])
+trophicLevels = trophic$trophic_fv[match(colnames(z_gt), trophic$taxa)]
+z_gt <- z_gt[,order(trophicLevels)]  #reorder by trophic level
+
+#source("/Volumes/GoogleDrive/Team Drives/m2w_analysis/analysis/strongCorrsPlot.R")
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/grey_strongCor.pdf", width = 10, height = 10)
+strong.corrs.plot(z_gt, cutoff = 0.6)
+dev.off()
+
+############### BLUE ###########
+
+bt <- as.character(c("f:Gonyaulacaceae","f:Prorocentraceae","f:Chrysolepidomonadaceae","f:Urechidae","f:Balaenopteridae","f:Sugiuridae","f:Rathkeidae","f:Puniceicoccaceae","f:Listeriaceae","f:Euphausiidae","f:Pleurotaceae"))
+bt = prune_taxa(bt,MB_all_filt)
+
+
+foo <-otu_table(bt) %>%
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  gather(sample, reads, -rowname) %>% 
+  mutate(sample = substr(sample,1,12)) %>% 
+  group_by(sample,rowname) %>% 
+  summarise(index.mean = mean(reads))
+names(foo) <- c("sample","family","index.mean")
+
+tidy.blue<-foo %>% 
+  mutate(rn = row_number()) %>% 
+  spread(sample, index.mean, fill = 0)
+tidy.blue<-tidy.blue[,-2]
+tidy.blue <- as.data.frame(tidy.blue)
+tidy.blue <- Col2RN(tidy.blue,1)
+
+tidy.blue <-tidy.blue[which(apply(tidy.blue, MARGIN = 1, FUN = function(x) sum(x>0)) > 1),] #filter for taxa occurring more than 3 times in 8 time points
+
+cor.mat.blue <- cor(t(tidy.blue), method = "kendall")
+diag(cor.mat.blue)<-0
+
+cor.tidy <- cor.mat.blue %>% 
+  as.data.frame %>% 
+  rownames_to_column("Fam1") %>% 
+  gather(key = Fam2, value = corr, -Fam1) %>% 
+  filter(corr > 0)
+strongCorrs <- unique(unlist(cor.tidy[,1:2]))  #which families have really strong correlations?
+
+heatmap.2(abs(cor.mat.blue[strongCorrs, strongCorrs]),dendrogram='none', Rowv=FALSE, Colv=FALSE,trace='none')
+
+z <- t(tidy.blue[strongCorrs,])
+trophicLevels = trophic$trophic_fv[match(colnames(z), trophic$taxa)]
+z <- z[,order(trophicLevels)]  #reorder by trophic level
+
+#source("/Volumes/GoogleDrive/Team Drives/m2w_analysis/analysis/strongCorrsPlot.R")
+pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/blue_stronCor.pdf", width = 10, height = 10)
+strong.corrs.plot(z, cutoff = 0.6)
+dev.off()
+
+```
+
+```{r connection of all networks with environmental variable}
+con <- intramodularConnectivity.fromExpr(datExpr_MB, moduleColors_MB, 
+                                         corFnc = "cor", corOptions = "use = 'p'",
+                                         weights = NULL,
+                                         distFnc = "dist", distOptions = "method = 'euclidean'",
+                                         networkType = "unsigned", power = 8,
+                                         scaleByMax = FALSE,
+                                         ignoreColors = if (is.numeric(colors)) 0 else "grey",
+                                         getWholeNetworkConnectivity = TRUE)
+
+
+con$taxa <- rownames(t(datExpr_MB))
+#blue_MB <- blue_MB[,1]
+con_blue <- con[con$taxa %in% blue_MB, ]
+write.csv(con_blue, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_blue.csv")
+trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
+con_blue$trophic_lev <- trophic_lev$trophic_fv[match(con_blue$taxa, trophic_lev$taxa)]
+
+#dg_MB <- dg_MB[,1]
+con_dg <- con[con$taxa %in% dg_MB, ]
+write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
+con_dg$trophic_lev <- trophic_lev$trophic_fv[match(con_dg$taxa, trophic_lev$taxa)]
+
+con_green <- con[con$taxa %in% green_MB, ]
+#write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
+con_green$trophic_lev <- trophic_lev$trophic_fv[match(con_green$taxa, trophic_lev$taxa)]
+
+con_yel <- con[con$taxa %in% yel_MB, ]
+#write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
+con_yel$trophic_lev <- trophic_lev$trophic_fv[match(con_yel$taxa, trophic_lev$taxa)]
+
+con_orange <- con[con$taxa %in% orange_MB, ]
+#write.csv(con_orange, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_orange.csv")
+con_orange$trophic_lev <- trophic_lev$trophic_fv[match(con_orange$taxa, trophic_lev$taxa)]
+
+con_grey <- con[con$taxa %in% grey_MB, ]
+#write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
+con_grey$trophic_lev <- trophic_lev$trophic_fv[match(con_grey$taxa, trophic_lev$taxa)]
+
+#Blue and grey separately!
+datExpr_MB_Blue <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% blue_MB)
+datExpr_MB_grey <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% dg_MB)
+datExpr_MB_green <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% green_MB)
+datExpr_MB_yel <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% yel_MB)
+datExpr_MB_orange <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% orange_MB)
+datExpr_MB_black <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% grey_MB)
+
+cor_blue <- as.data.frame(abs(cor(as.matrix(t(datExpr_MB_Blue)),meta, method = "pearson")))
+cor_dg <- as.data.frame(abs(cor(as.matrix(t(datExpr_MB_grey)),meta, method = "pearson")))
+cor_green <- as.data.frame(abs(cor(as.matrix(t(datExpr_MB_green)),meta, method = "pearson")))
+cor_yel <- as.data.frame(abs(cor(as.matrix(t(datExpr_MB_yel)),meta, method = "pearson")))
+cor_orange <- as.data.frame(abs(cor(as.matrix(t(datExpr_MB_orange)),meta, method = "pearson")))
+cor_black <- as.data.frame(abs(cor(as.matrix(t(datExpr_MB_black)),meta, method = "pearson")))
+
+
+pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/con_cor_env_all.pdf", height=25, width=25)
+par(mfrow=c(6,6))
+
+plot(cor_blue$upwelling,con_blue$kWithin)
+plot(cor_blue$temp,con_blue$kWithin)
+plot(cor_blue$salinity,con_blue$kWithin)
+plot(cor_blue$chlorophyll,con_blue$kWithin)
+plot(cor_blue$nitrate,con_blue$kWithin)
+plot(cor_blue$diss_oxygen,con_blue$kWithin)
+
+plot(cor_dg$upwelling,con_dg$kWithin)
+plot(cor_dg$temp,con_dg$kWithin)
+plot(cor_dg$salinity,con_dg$kWithin)
+plot(cor_dg$chlorophyll,con_dg$kWithin)
+plot(cor_dg$nitrate,con_dg$kWithin)
+plot(cor_dg$diss_oxygen,con_dg$kWithin)
+
+plot(cor_green$upwelling,con_green$kWithin)
+plot(cor_green$temp,con_green$kWithin)
+plot(cor_green$salinity,con_green$kWithin)
+plot(cor_green$chlorophyll,con_green$kWithin)
+plot(cor_green$nitrate,con_green$kWithin)
+plot(cor_green$diss_oxygen,con_green$kWithin)
+
+plot(cor_yel$upwelling,con_yel$kWithin)
+plot(cor_yel$temp,con_yel$kWithin)
+plot(cor_yel$salinity,con_yel$kWithin)
+plot(cor_yel$chlorophyll,con_yel$kWithin)
+plot(cor_yel$nitrate,con_yel$kWithin)
+plot(cor_yel$diss_oxygen,con_yel$kWithin)
+
+plot(cor_orange$upwelling,con_orange$kWithin)
+plot(cor_orange$temp,con_orange$kWithin)
+plot(cor_orange$salinity,con_orange$kWithin)
+plot(cor_orange$chlorophyll,con_orange$kTotal)
+plot(cor_orange$nitrate,con_orange$kWithin)
+plot(cor_orange$diss_oxygen,con_orange$kWithin)
+
+plot(cor_black$upwelling,con_grey$kWithin)
+plot(cor_black$temp,con_grey$kWithin)
+plot(cor_black$salinity,con_grey$kWithin)
+plot(cor_black$chlorophyll,con_grey$kWithin)
+plot(cor_black$nitrate,con_grey$kWithin)
+plot(cor_black$diss_oxygen,con_grey$kWithin)
+
+dev.off()
+
+```
+

@@ -9,7 +9,7 @@ output: html_document
 library(here); library(plyr); library(biomformat); library(tidyverse); library(phyloseq); library(vegan); library(reshape2); library(MASS); library(stringr); library(purrr); library(ggplot2); library(Hmisc); library(lubridate); library(corrplot); library(gplots); library(rafalib);library(tissuesGeneExpression); library(genefilter); library(RColorBrewer); library(ggdendro);library(ComplexHeatmap); library(circlize); library(colorspace); library(GetoptLong);library(WGCNA); library(matrixStats);library(Hmisc); library(splines);library(foreach);library(doParallel);library(fastcluster); library(dynamicTreeCut); library(survival); library(WGCNA); library(cluster); library(beepr);library(bioDist); library(FactoMineR);library(MASS); library(ggfortify); library(factoextra); library(qpcR);library(mixOmics); library(flashClust); library(ggridges); library(plotly); library(randomForest)
 ```
 
-```{r, include=FALSE}
+```{r color, include=FALSE}
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","red","grey", "grey20")
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
@@ -26,13 +26,13 @@ pal <- colorRampPalette(brewer.pal(11, "RdYlGn"))(50)
 ```
 
 ```{r read in MB data undergone decontamination, include=FALSE}
-MB_16S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_tax_table.csv", row.names = 1))),sample_data(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_sam_table.csv", row.names = 1)))
+MB_16S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_tax_table.csv", row.names = 1))),sample_data(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_sam_table.csv", row.names = 1)))
 
-MB_18S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_sam_table.csv", row.names = 1)))
+MB_18S_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_sam_table.csv", row.names = 1)))
 
-MB_COI_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_sam_table.csv", row.names = 1)))
+MB_COI_m2w <- merge_phyloseq(otu_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_otu_table.csv", row.names = 1,check.names = FALSE)), taxa_are_rows = TRUE),tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_taxa_table.csv", row.names = 1))),sample_data(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_sam_table.csv", row.names = 1)))
 
-MB_12S_m2w <- merge_phyloseq(otu_table(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_otu_table.csv", row.names = 1, check.names = FALSE), taxa_are_rows = TRUE), tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_taxa_table.csv", row.names = 1))), sample_data(read.csv(file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_sam_data.csv",row.names = 1)))
+MB_12S_m2w <- merge_phyloseq(otu_table(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_otu_table.csv", row.names = 1, check.names = FALSE), taxa_are_rows = TRUE), tax_table(as.matrix(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_taxa_table.csv", row.names = 1))), sample_data(read.csv(file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_sam_data.csv",row.names = 1)))
 ```
 
 ```{r functions for splitting species, adding taxonomy to highest level available and pseudoautocorrelation, include=FALSE,message=FALSE, warning=FALSE}
@@ -252,6 +252,11 @@ pairs(z,
 ```
 
 ```{r transform sample abundance to proportion and make one dataframe per location, include=FALSE, echo=FALSE, warning=FALSE}
+#MB_16S_gen <- tax_glom(MB_16S_m2w, "Rank7")
+#MB_18S_gen <- tax_glom(MB_18S_m2w, "Rank7")
+#MB_COI_gen <- tax_glom(MB_COI_m2w, "Rank7")
+#MB_12S_gen <- tax_glom(MB_12S_m2w, "Rank7")
+
 MB_16S_fam <- tax_glom(MB_16S_m2w, "Rank5")
 MB_18S_fam <- tax_glom(MB_18S_m2w, "Rank5")
 MB_COI_fam <- tax_glom(MB_COI_m2w, "Rank5")
@@ -267,7 +272,7 @@ MB_16S_prop = transform_sample_counts(MB_16S_fam,function(x) x / sum(x))
 MB_16S_prop = prune_taxa(taxa_sums(MB_16S_prop)>0, MB_16S_prop)
 MB_16S_prop2 <- sweep(MB_16S_prop@otu_table,1,rowMaxs(MB_16S_prop@otu_table),"/")
 
-#write.csv(as.data.frame(MB_16S_prop@tax_table), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_tax_table.csv")  #is this the best way to save biom files?
+#write.csv(as.data.frame(MB_16S_prop@tax_table), "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/16S/MB_16S_tax_table.csv")  #is this the best way to save biom files?
 
 tax_table(MB_18S_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_18S_fam))))))
 MB_18S_fam <- add_taxonomy_column(MB_18S_fam)
@@ -279,7 +284,7 @@ MB_18S_prop = transform_sample_counts(MB_18S_fam,function(x) x / sum(x))
 MB_18S_prop = prune_taxa(taxa_sums(MB_18S_prop)>0, MB_18S_prop)
 MB_18S_prop2 <- sweep(MB_18S_prop@otu_table,1,rowMaxs(MB_18S_prop@otu_table),"/")
 
-#write.csv(as.data.frame(MB_18S_prop@tax_table), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_tax_table.csv")  #is this the best way to save biom files?
+#write.csv(as.data.frame(MB_18S_prop@tax_table), "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/18S/MB_18S_tax_table.csv")  #is this the best way to save biom files?
 
 tax_table(MB_COI_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_COI_fam))))))
 MB_COI_fam <- add_taxonomy_column(MB_COI_fam)
@@ -291,7 +296,7 @@ MB_COI_prop = transform_sample_counts(MB_COI_fam,function(x) x / sum(x))
 MB_COI_prop = prune_taxa(taxa_sums(MB_COI_prop)>0, MB_COI_prop)
 MB_COI_prop2 <- sweep(MB_COI_prop@otu_table,1,rowMaxs(MB_COI_prop@otu_table),"/")
 
-#write.csv(as.data.frame(MB_COI_prop@tax_table), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_tax_table.csv")  #is this the best way to save biom files?
+#write.csv(as.data.frame(MB_COI_prop@tax_table), "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/COI/MB_COI_tax_table.csv")  #is this the best way to save biom files?
 
 tax_table(MB_12S_fam) <- gsub('f_', as.character(NA), gsub('o_', as.character(NA), gsub('c_',as.character(NA), gsub('p_', as.character(NA), gsub('unknown', as.character(NA),tax_table(MB_12S_fam))))))
 MB_12S_fam <- add_taxonomy_column(MB_12S_fam) # Add family and order assignments 
@@ -302,7 +307,7 @@ MB_12S_prop = transform_sample_counts(MB_12S_fam,function(x) x / sum(x))
 MB_12S_prop = prune_taxa(taxa_sums(MB_12S_prop)>0, MB_12S_prop)
 MB_12S_prop2 <- sweep(MB_12S_prop@otu_table,1,rowMaxs(MB_12S_prop@otu_table),"/")
 
-#write.csv(as.data.frame(MB_12S_prop@tax_table), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_tax_table.csv")
+#write.csv(as.data.frame(MB_12S_prop@tax_table), "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/12S/MB_12S_tax_table.csv")
 #Merge all data from MB not relative abundance
 MB_all_tax_ps <- merge_phyloseq(MB_COI_fam@otu_table, MB_16S_fam@otu_table,
                                 MB_12S_fam@otu_table, MB_18S_fam@otu_table, MB_18S_fam@sam_data)
@@ -315,7 +320,7 @@ MB_all_tax_ps_ts_merge <- merge_samples(MB_all_tax_ps_ts,"SAMPLING_date",fun=mea
 
 #a <- MB_all_tax_ps_ts@sam_data
 # filter out bad taxa 
-badTaxa_MB <- read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/MB_badtaxa.csv", header=FALSE)
+badTaxa_MB <- read.csv("/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/MB_badtaxa.csv", header=FALSE)
 badTaxa_MB <- badTaxa_MB[[1]] # make bad taxa into list
 goodTaxa_MB <- setdiff(taxa_names(MB_all_tax_ps_ts), badTaxa_MB) #subset good taxa
 MB_all_tax_ps_rel = prune_taxa(goodTaxa_MB,MB_all_tax_ps_ts) #filter good taxa from all taxa list from all data (not merged replicates)
@@ -326,13 +331,13 @@ MB_merged_otu <- t(as.matrix(MB_all_tax_ps_ts_merge@otu_table)) #transpose merge
 MB_merged_otu_table <- sweep(MB_merged_otu,1,rowMaxs(MB_merged_otu),"/") 
 MB_all_merge <- as.data.frame(t(MB_merged_otu_table)) #create non transposed otu table
 
-#saveRDS(MB_all_tax_ps_rel, "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_tax_ps_rel.Rdata")  
+#saveRDS(MB_all_tax_ps_rel, "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_tax_ps_rel.Rdata")  
 MB_all_otu_table <- as.matrix(MB_all_tax_ps_rel@otu_table)
 MB_all_otu_table <- sweep(MB_all_otu_table,1,rowMaxs(MB_all_otu_table),"/")
 MB_all_tax_ps_rel <- merge_phyloseq(otu_table(MB_all_otu_table, taxa_are_rows = TRUE), MB_all_tax_ps_rel@sam_data)
 
-write.csv(MB_all_otu_table, "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_otu_table.csv")  
-write.csv(MB_merged_otu_table, "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_merged_otu_table.csv")  
+write.csv(MB_all_otu_table, "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_otu_table.csv")  
+write.csv(MB_merged_otu_table, "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_merged_otu_table.csv")  
 ```
 
 ```{r filter by Kendall correlations, include=FALSE, echo =FALSE}
@@ -340,7 +345,7 @@ bit=function(x){print(x[c(1:10),c(1:10)]); print(dim(x))}  #shows top-left corne
 colMax <- function(data) sapply(data, max, na.rm = TRUE) #get column-wise maximum value
 Col2RN<-function(df, x){row.names(df)<-df[,x]; df<-df[-x]; return(df)} #convert column to row.names
 
-# a<-readRDS("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MB_all_tax_ps_rel.Rdata")
+# a<-readRDS("/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MB_all_tax_ps_rel.Rdata")
 # 
 # otus<-as.data.frame(otu_table(a))
 #   names(otus)
@@ -361,9 +366,9 @@ corMB <- melt(corMB)%>%
   filter(!is.na(value))%>%
   filter(value>=0.7)
 
-length(unique(unlist(corMB[,1:2])))  #339 unique taxa
+length(unique(unlist(corMB[,1:2])))  #348 unique taxa
     
-    #save(corMB, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/analysis/MBKendall.Rdata")
+    #save(corMB, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/analysis/MBKendall.Rdata")
     
     #sanity check plot
 #    plot(otus["f:Paracalanidae",]~otus["f:Thalassiosiraceae",])
@@ -373,8 +378,8 @@ unique_kend_taxa <- as.character(unique(unlist(corMB[,1:2])))
 MB_merge_filt = prune_taxa(unique_kend_taxa,otu_table(MB_merged_otu_table, taxa_are_rows = TRUE))
 #a <- MB_merge_filt@.Data
 MB_all_filt = prune_taxa(unique_kend_taxa,otu_table(MB_all_tax_ps_rel, taxa_are_rows = TRUE))
-write.csv(as.data.frame(MB_all_filt@.Data), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_filt.csv")
-write.csv(as.data.frame(MB_merge_filt@.Data), "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_merge_filt.csv")
+write.csv(as.data.frame(MB_all_filt@.Data), "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_all_filt.csv")
+write.csv(as.data.frame(MB_merge_filt@.Data), "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_merge_filt.csv")
 ```
 
 ###Network analysis
@@ -407,7 +412,7 @@ sampleTree_MB = hclust(tau.dist(datExpr_MB))
 #sizeGrWindow(12,9)
 par(cex = 0.6);
 #par(mar = c(0,4,2,0))
-#pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/net_dendro_tau.pdf")
+#pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/network/net_dendro_tau.pdf")
 plot(sampleTree_MB, main="",sub="", xlab="", cex=0.7,cex.lab = 0.8, cex.axis = 0.7)
 #dev.off()
 
@@ -415,7 +420,7 @@ nGenes_MB = ncol(datExpr_MB)
 nSamples_MB = nrow(datExpr_MB)
 
 #load trait data
-traitData_MB = read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/metadata_MB_merged_sam.csv")
+traitData_MB = read.csv("/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/metadata_MB_merged_sam.csv")
 #dim(traitData_MB)
 #names(traitData_MB)
 
@@ -434,7 +439,7 @@ sampleTree2_MB = hclust(tau.dist(datExpr_MB), method = "average")
 # Convert traits to a color representation: white means low, red means high, grey means missing entry
 traitColors_MB = numbers2colors(scale(datTraits_MB), signed = FALSE);
 # Plot the sample dendrogram and the colors underneath.
-#pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/net_dendro_tau_w_env.pdf")
+#pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/network/net_dendro_tau_w_env.pdf")
 plotDendroAndColors(sampleTree2_MB, traitColors_MB,
                     groupLabels = names(datTraits_MB), 
                     main = "Sample dendrogram and trait heatmap")
@@ -450,7 +455,7 @@ sft_MB = pickSoftThreshold(datExpr_MB, powerVector = powers, verbose = 5)
 # Plot the results:
 
 #sizeGrWindow(9, 5)
-#pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/pick_soft_threshold.pdf")
+#pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/network/pick_soft_threshold.pdf")
 par(mfrow = c(1,2));
 cex1 = 0.8;
 # Scale-free topology fit index as a function of the soft-thresholding power
@@ -485,7 +490,7 @@ moduleLabelsManual1 = cutreeDynamic(dendro = geneTree, distM = dissTOM, method =
 moduleColorsManual2 = labels2colors(moduleLabelsManual1)
 moduleColors_MB = gsub("yellow","#ffc425", gsub("blue","#00aedb", gsub("green","#00b159", gsub("brown","#f37735", gsub("turquoise","#8c8c8c",gsub("grey","black", moduleColorsManual2))))))
 
-pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/taxa_dendro_modules.pdf", height=7,width=10)
+pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/network/taxa_dendro_modules.pdf", height=7,width=10)
 plotDendroAndColors(geneTree, moduleColors_MB,
                     "Module colors",
                     dendroLabels = FALSE, hang = 0.03,
@@ -501,7 +506,7 @@ colnames(MET) = c("blue", "green","grey","yellow","orange", "black")
 # Plot the relationships among the eigengenes and the trait
 plotEigengeneNetworks(MET, "",marDendro = c(0, 4, 1, 2), marHeatmap = c(3,4, 1, 2), cex.lab = 0.6, xLabelsAngle = 90)
 
-pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/dendro_modules.pdf", height=2)
+pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/dendro_modules.pdf", height=2)
 par(cex = 0.7)
 plotEigengeneNetworks(MET, "",marDendro = c(0,4,2,0),plotHeatmaps = FALSE, signed=FALSE)
 dev.off()
@@ -523,13 +528,13 @@ textMatrix_MB =  paste(signif(moduleTraitCor_MB, 2), "\n(",
                        signif(moduleTraitPvalue_MB, 1), ")", sep = "");
 dim(textMatrix_MB) = dim(moduleTraitCor_MB)
 # Display the correlation values within a heatmap plot
-#pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/module_cor_envir.pdf")
+#pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/network/module_cor_envir.pdf")
 #par(mar = c(6, 8.5, 3, 3));
 #reorder <- c("yellow", "green","orange","black","blue", "grey")
 #moduleTraitCor_MB %>%
 #  mutate(moduleTraitCor_MB[,1] =  factor(moduleTraitCor_MB[,1], levels = reorder)) %>% arrange(moduleTraitCor_MB[,1])
 
-pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/network/module_cor_envir.pdf")
+pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/network/module_cor_envir.pdf")
 labeledHeatmap(Matrix = moduleTraitCor_MB,
                xLabels = c("Upwelling","Temperature","Salinity","Chl. a","Nitrate","Diss. Oxygen"),
                yLabels = names(MET),
@@ -544,7 +549,7 @@ labeledHeatmap(Matrix = moduleTraitCor_MB,
                main = paste("Module-trait relationships"))
 dev.off()
 
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/heatmap_all_modules.pdf", height=12, width=15)
+#pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/heatmap_all_modules.pdf", height=12, width=15)
 # par(mfrow=c(3,2), mar=c(1, 5, 5, 3))
 # which.module="#ffc425"; #yellow
 # plotMat(t(scale(datExpr_MB[,moduleColors_MB==which.module])),nrgcols=50,rlabels=colnames(datExpr_MB[,moduleColors_MB==which.module]),clabels=rownames(datExpr_MB),rcols=which.module)
@@ -575,7 +580,7 @@ rownames(dg_rich) <- "black"
 
 rich_all_mod <- rbind(yel_rich,blue_rich,green_rich,orange_rich,dg_rich, black)
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/module_richness_time.pdf", height=4, width=4.5)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/module_richness_time.pdf", height=4, width=4.5)
 par(mar=c(3,4,1,4))
 barplot(rich_all_mod, border = NA, axes = FALSE,col="white", cex.axis=0.8,cex.lab=0.8, space=c(0.5,2,2,1,3,3,0,2),cex=0.8, ylab="", xlab="", xaxt="n",ylim=c(0,125))
 rect(-0.5, 120,2.5,-5,col = "gray85", density=NA)
@@ -599,7 +604,7 @@ chooseTopHubInEachModule(datExpr_MB,moduleColors_MB, omitColors = "", power = 22
 GS1=as.numeric(cor(datTraits_MB$chlorophyll,datExpr_MB))
 GeneSignificance=abs(GS1)
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/module_significance_chl.pdf", height=4, width=5)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/module_significance_chl.pdf", height=4, width=5)
 plotModuleSignificance(GeneSignificance,moduleColors_MB,main="")
 dev.off()
 
@@ -626,8 +631,8 @@ cyt = exportNetworkToCytoscape(modTOM,
       nodeFile = paste("CytoscapeInput-nodes-", paste(modules, collapse="-"), ".txt", sep=""),
       weighted = TRUE,threshold = 0.2, nodeNames = modProbes, nodeAttr = moduleColors_MB[inModule])
 
-write.csv(cyt$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge.csv")
-write.csv(cyt$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node.csv")
+write.csv(cyt$edgeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge.csv")
+write.csv(cyt$nodeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node.csv")
 
 #moduleColors_MB = gsub("yellow","#ffc425", gsub("blue","#00aedb", gsub("red", "#d11141", gsub("green","#00b159",gsub("brown","#f37735",gsub("turquoise","#8c8c8c",moduleColors_MB))))))
 
@@ -646,8 +651,8 @@ cyt_blue = exportNetworkToCytoscape(modTOM_blue,
       nodeFile = paste("CytoscapeInput-nodes-", paste(blue, collapse="-"), ".txt", sep=""),
       weighted = TRUE,threshold = 0.2, nodeNames = modProbes_blue, nodeAttr = moduleColors_MB[inModule_blue])
 
-write.csv(cyt_blue$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_blue.csv")
-write.csv(cyt_blue$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_blue.csv")
+write.csv(cyt_blue$edgeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_blue.csv")
+write.csv(cyt_blue$nodeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_blue.csv")
 
 
 dg <- "#8c8c8c"
@@ -663,8 +668,8 @@ cyt_dg = exportNetworkToCytoscape(modTOM_dg,
       nodeFile = paste("CytoscapeInput-nodes-", paste(blue, collapse="-"), ".txt", sep=""),
       weighted = TRUE,threshold = 0.2, nodeNames = modProbes_dg, nodeAttr = moduleColors_MB[inModule_dg])
 
-write.csv(cyt_dg$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_dg.csv")
-write.csv(cyt_dg$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_dg.csv")
+write.csv(cyt_dg$edgeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_dg.csv")
+write.csv(cyt_dg$nodeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_dg.csv")
 
 #export all modules separately
 datExpr_MB <- as.data.frame(datExpr_MB)
@@ -675,7 +680,7 @@ orange_MB <- names(datExpr_MB)[moduleColors_MB=="#f37735"] #orange
 green_MB <- names(datExpr_MB)[moduleColors_MB=="#00b159"] #green
 yel_MB <-names(datExpr_MB)[moduleColors_MB=="#ffc425"] #yellow
 #red_MB <- names(datExpr_MB)[moduleColors_MB=="#d11141"] #red
-write.csv(qpcR:::cbind.na(blue_MB,dg_MB,orange_MB,green_MB,yel_MB, grey_MB), file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/all_module_taxa.csv")
+write.csv(qpcR:::cbind.na(blue_MB,dg_MB,orange_MB,green_MB,yel_MB, grey_MB), file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/all_module_taxa.csv")
 
 ```
 
@@ -693,8 +698,8 @@ names(dg_MB) <- c("taxa","module")
 blue_grey <- rbind(blue_MB,dg_MB)
 blue_grey_taxa <- blue_grey[,1]
 datExpr_MB_BG <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% blue_grey_taxa)
-write.csv(datExpr_MB_BG, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/datExpr_MB_BG.csv")
-trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
+write.csv(datExpr_MB_BG, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/datExpr_MB_BG.csv")
+trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
 
 blue_grey <- blue_grey[match(rownames(datExpr_MB_BG), blue_grey$taxa),]
 blue_grey$trophic_level <- trophic_lev$trophic_fv[match(blue_grey$taxa, trophic_lev$taxa)]
@@ -714,11 +719,11 @@ plot(tune.spls$Q2.total)
 summary(tune.spls$PRESS)
 # to save as a pdf
 
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/SPLS_network.pdf", height=10, width=12)
+#pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/SPLS_network.pdf", height=10, width=12)
 #network(MB.spls_BG,color.node=c("grey", "white"),color.edge = c("red","orange","cyan","blue"),row.names=FALSE, cex.node.name=0.9,cutoff = 0.30)
 #dev.off()
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/SPLS_heatmap_darkg_blue.pdf", height=6, width=9)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/SPLS_heatmap_darkg_blue.pdf", height=6, width=9)
 par(mar=c(1,1,1,1))
 #RdYlBu <- t(brewer.pal(11,"RdYlBu"))
 col_a <- colorRampPalette(c("#313695","#4575B4","#74ADD1","#ABD9E9","#E0F3F8","#FFFFBF","#FEE090","#FDAE61","#F46D43","#D73027","#A50026"))(90)
@@ -755,7 +760,7 @@ gr_yel_ora_bl <- gr_yel_ora_bl[match(rownames(gr_yel_ora_bl_MB), gr_yel_ora_bl$t
 gr_yel_ora_bl_MB <- t(gr_yel_ora_bl_MB)
 MB.spls_gr_yel_ora_bl <- spls(gr_yel_ora_bl_MB, meta, ncomp = 6, mode = "regression")
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/SPLS_heatmap_gr_yel_ora_bla.pdf", height=6, width=9)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/SPLS_heatmap_gr_yel_ora_bla.pdf", height=6, width=9)
 par(mar=c(1,1,1,1))
 cim(MB.spls_gr_yel_ora_bl, comp = 1:3, xlab = "",dist.method = c("euclidean", "euclidean"),row.sideColors = c("#00b159", "#ffc425","#f37735","black")[as.factor(gr_yel_ora_bl$module)], color=col_a,transpose=TRUE,threshold=0,keysize.label = 0.7,keysize =c(1, 1),row.cex=0.8,col.cex=0.6,ylab = "",margins = c(10, 8),row.names=FALSE,col.names=c("Upwelling","Temperature","Salinity","Chl. a","Nitrate","Diss. Oxygen"))
 dev.off()
@@ -773,10 +778,10 @@ plot(rf_model) # plot of error against number of trees grown
 summary(rf_model)
 ```
 
-####Line plots (a version of this will probably go into main document)
+####Line plots
 ```{r nice line plots}
 MB_merge_filt_t <- as.data.frame(t(MB_merge_filt))
-write.csv(MB_merge_filt_t, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/merge_filt_t.csv")
+write.csv(MB_merge_filt_t, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/merge_filt_t.csv")
 MB_merge_filt_t$collection_date <- rownames(MB_merge_filt_t)
 
 Otariidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Otariidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Otariidae")))
@@ -785,8 +790,9 @@ Syndiniaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Syndiniaceae`),dat
 Temoridae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Temoridae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Temoridae")))
 #Metridinidae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Metridinidae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Metridinidae")))
 Rhodospirillaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Rhodospirillaceae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Rhodospirillaceae")))
+Bacillariaceae <- cbind(data.frame(Abundance=MB_merge_filt_t$`f:Bacillariaceae`),data.frame(Date=MB_merge_filt_t$collection_date), Taxa=(c("Bacillariaceae")))
 
-data_ggridges <- rbind(Otariidae,Carangidae,Temoridae,Syndiniaceae,Rhodospirillaceae)
+data_ggridges <- rbind(Otariidae,Carangidae,Temoridae,Syndiniaceae,Rhodospirillaceae,Bacillariaceae)
 data_ggridges$Date<-ymd(data_ggridges$Date)
 
 data_ggridges <- dplyr::arrange(data_ggridges, Date)
@@ -802,7 +808,7 @@ Data_sum <- data_ggridges %>%
   tidyr::uncount(Abundance)
 Data_sum$DATES <- ymd(Data_sum$DATES)
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/joyplot_dg.pdf",height=6,width=7)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/joyplot_dg.pdf",height=6,width=7)
 ggplot(Data_sum, aes(x = dayVector, y = Taxa,fill=Taxa)) + 
   geom_density_ridges(scale=1.15, alpha=0.7, color="black",jittered_points = TRUE,
     position = position_points_jitter(width = 0.05, height = 0),
@@ -857,7 +863,7 @@ Data_sum_b <- data_ggridges_b %>%
   tidyr::uncount(Abundance)
 Data_sum_b$DATES <- ymd(Data_sum_b$DATES)
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/joyplot_blue.pdf",height=6,width=7)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/joyplot_blue.pdf",height=6,width=7)
 ggplot(Data_sum_b, aes(x = dayVector, y = Taxa,fill=Taxa)) + 
   geom_density_ridges(scale=1.15, alpha=0.6,color="black",jittered_points = TRUE,
     position = position_points_jitter(width = 0.05, height = 0),
@@ -877,11 +883,11 @@ trophic_grey <- prop.table(trophic_grey)*100
 labels_grey <- c("Saprotrophs (22.8%)", "Autotrophs (17.5%)", "Primary consumers (10.5%)", "Secondary consumers (48.2%)","Tertiary consumers (0.9%)")
 
 # Plot the chart.
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/trophic_pie_blue.pdf", height=5, width=7)
-pie(trophic_blue,labels_blue, border=FALSE,col=c("lightcyan","lightblue","#00aedb","#2b8cbe","steelblue4"), cex=0.8)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/trophic_pie_blue.pdf", height=5, width=11)
+pie(trophic_blue,labels_blue, border=FALSE,col=c("lightcyan","lightblue","#00aedb","#2b8cbe","steelblue4"), cex=2)
 dev.off()
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/trophic_pie_grey.pdf", height=5, width=7)
-pie(trophic_grey,labels_grey, border=FALSE,col=c("grey95","grey80","grey60","grey40","grey20"),cex=0.8)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/trophic_pie_grey.pdf", height=5, width=11)
+pie(trophic_grey,labels_grey, border=FALSE, col=c("grey95","grey80","grey60","grey40","grey20"),cex=2)
 dev.off()
 
 ```
@@ -899,13 +905,13 @@ con <- intramodularConnectivity.fromExpr(datExpr_MB, moduleColors_MB,
 con$taxa <- rownames(t(datExpr_MB))
 blue_MB <- blue_MB[,1]
 con_blue <- con[con$taxa %in% blue_MB, ]
-write.csv(con_blue, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_blue.csv")
-trophic <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
-trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
+write.csv(con_blue, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_blue.csv")
+trophic <- read.csv(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
+trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
 con_blue$trophic_lev <- trophic_lev$trophic_fv[match(con_blue$taxa, trophic_lev$taxa)]
 dg_MB <- dg_MB[,1]
 con_dg <- con[con$taxa %in% dg_MB, ]
-write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
+write.csv(con_dg, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
 con_dg$trophic_lev <- trophic_lev$trophic_fv[match(con_dg$taxa, trophic_lev$taxa)]
 
 #Blue and grey separately!
@@ -916,7 +922,7 @@ cor_blue <- as.data.frame(cor_blue)
 cor_dg <- cor(as.matrix(t(datExpr_MB_grey)),meta, method = "pearson")
 cor_dg <- as.data.frame(cor_dg)
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/con_env.pdf", height=5, width=9)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/con_env.pdf", height=5, width=9)
 par(mfrow=c(1,2))
 par(mar=c(4,4,3,2.7))
 df_blue <- data.frame(cor_blue$temp,con_blue$kWithin,con_blue$trophic_lev)
@@ -926,7 +932,7 @@ lm_blue <- nls(con_blue.kWithin ~ exp(a + b * cor_blue.temp), data = df_blue, st
 #summary(lm_blue)
 newblue <- seq(min(df_blue$cor_blue.temp), max(df_blue$cor_blue.temp), 0.001)
 pre_blue <- predict(lm_blue, newdata=data.frame(cor_blue.temp=newblue), interval="confidence")
-lines(newblue,pre_blue, lty=2,col="grey50")
+#lines(newblue,pre_blue, lty=2,col="grey50")
 #newblue <- seq(min(df_blue$cor_blue.temp), max(df_blue$cor_blue.temp), 0.001)
 #pre_blue <- predict(lm_blue, newdata=data.frame(cor_blue.temp=newblue), interval="confidence")
 #lines(newblue, pre_blue[,2], lty=2,col="grey50")
@@ -943,7 +949,7 @@ lm_dg <- nls(con_dg.kWithin ~ exp(a + b * cor_dg.chlorophyll), data = df_dg, sta
 summary(lm_dg)
 newdg <- seq(min(df_dg$cor_dg.chlorophyll), max(df_dg$cor_dg.chlorophyll), 0.001)
 pre_dg <- predict(lm_dg, newdata=data.frame(cor_dg.chlorophyll=newdg), interval="confidence")
-lines(newdg,pre_dg, lty=2,col="grey50")
+#lines(newdg,pre_dg, lty=2,col="grey50")
 #lm_dg <- lm(con_dg.kWithin~cor_dg.chlorophyll, data=df_dg)
 #newdg <- seq(min(df_dg$cor_dg.chlorophyll), max(df_dg$cor_dg.chlorophyll), 0.001)
 #pre_dg <- predict(lm_dg, newdata=data.frame(cor_dg.chlorophyll=newdg), interval="confidence")
@@ -962,20 +968,20 @@ dev.off()
 cyt_blue$nodeData$trophic_level <- trophic_lev$trophic_fv[match(cyt_blue$nodeData$nodeName, trophic_lev$taxa)]
 cyt_blue$nodeData$connectivity <- con_blue$kWithin[match(cyt_blue$nodeData$nodeName, con_blue$taxa)]
 
-write.csv(cyt_blue$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_blue.csv")
-write.csv(cyt_blue$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_blue.csv")
+write.csv(cyt_blue$edgeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_blue.csv")
+write.csv(cyt_blue$nodeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_blue.csv")
 
 cyt_dg$nodeData$trophic_level <- trophic_lev$trophic_fv[match(cyt_dg$nodeData$nodeName, trophic_lev$taxa)]
 cyt_dg$nodeData$connectivity <- con_dg$kWithin[match(cyt_dg$nodeData$nodeName, con_dg$taxa)]
 
-write.csv(cyt_dg$edgeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_dg.csv")
-write.csv(cyt_dg$nodeData, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_dg.csv")
+write.csv(cyt_dg$edgeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_edge_dg.csv")
+write.csv(cyt_dg$nodeData, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_node_dg.csv")
 
 ```
 
 ###PCA
 ```{r env traits based on PCA,echo=FALSE,message=FALSE, warning=FALSE}
-#meta<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/m2w_metadata_MB.csv")
+#meta<-read.csv("/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/m2w_metadata_MB.csv")
 #names(meta)
 #DATES<-str_split(meta$SAMPLING_date_time, " ", simplify=T)[,2]
 meta2<-meta[,c(1,2,3,4,5)]
@@ -991,7 +997,7 @@ fviz_eig(envir.PCA)
 #fviz_pca_ind(envir.PCA)
   
 #plotting w ggfortify; see https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html
-#pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/envirPCA.pdf")
+#pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/envirPCA.pdf")
 autoplot(envir.PCA,
          loadings = T, loadings.label = T, loadings.label.size = 4)+
   theme_minimal()
@@ -1025,7 +1031,7 @@ labeledHeatmap(Matrix = moduleTraitCor_MB,
 
 ############### BIOENV #######
 MB_all_tax_df <- t(data.frame(MB_all_tax_ps_rel@otu_table))
-meta_bioenv<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/m2w_metadata_MB.csv")
+meta_bioenv<-read.csv("/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/m2w_metadata_MB.csv")
 meta_bioenv<-meta_bioenv[,c(18,47,48,49,51,52)]
 bioenv <- bioenv(MB_all_tax_df, meta_bioenv, method="kendall", index="bray")
 
@@ -1072,7 +1078,7 @@ colMeans(dist.blue_sa_MB)
 colMeans(dist.dg_sa_MB)
 
 #PLOT DARK GREY AND BLUE
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/blue_dg_PA.pdf",height=6,width=6)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/blue_dg_PA.pdf",height=6,width=6)
 par(mfcol=c(2,1))
 par(mar=c(0.5,5,3,4))
 boxplot(dist.dg_sa_MB, cex.lab=0.8,cex.axis=0.6,las=1,xlab="", at=c(1,4.5,7.5,12.5,18,19,22),ylab="Jaccard Distance", xlim=c(-1.8,22), cex=0.8,ylim=c(0.45,1), col="#8c8c8c",xaxt="n")
@@ -1097,8 +1103,8 @@ mtext("Sea surface temp.",cex=0.8,side=4,line=1.9,las=3)
 dev.off()
 
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/blue_dg_PA_env.pdf",height=6,width=6)
-dif_SA<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/dif_SA.csv")
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/blue_dg_PA_env.pdf",height=6,width=6)
+dif_SA<-read.csv("/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/dif_SA.csv")
 par(mfrow=c(2,1))
 par(mar=c(4,4,1,1))
 plot(dif_SA$dif_SST,dif_SA$dif_blue, xlab="Delta T",log="",ylab="Delta Jaccard", col="#00aedb", pch=19)
@@ -1141,7 +1147,7 @@ plot(ave_black_otu_MB~ dmy(traitData_MB$collection_date), type="l",lwd=2.5,col="
 
 
 ### plot by centric, pennate, and dinoflagellates
-diatoms <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnettroph_AD.csv")
+diatoms <- read.csv(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnettroph_AD.csv")
 
 centric = subset(diatoms, group_added == "centric_diatom")
 centric <- prune_taxa(centric$taxa,MB_merge_filt)
@@ -1160,14 +1166,14 @@ copepod <- prune_taxa(copepod$taxa,MB_merge_filt)
 copepod_ave <- colMeans(copepod)
 
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/diatom_dino.pdf",height=5,width=6)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/diatom_dino.pdf",height=5,width=6)
 par(mar=c(6,4,3,3))
 plot(env_MB$Mean.SST~dmy(env_MB$Date),type="n",ylim=c(10,19), lwd=5,xlab="", ylab="",yaxt="n",xaxt="n",col=alpha("grey",0.5))
 subdate <- c(ydm("2013-20-01"),dmy(env_MB$Date),ydm("2020-31-01"))
 sub.sst <- c(0,env_MB$Mean.SST,0)
 axis(side=4)
 mtext("Sea surface temperature",side=4,line=1.9,las=3)
-polygon(subdate, sub.sst, col='gray90', border=NA, density=30) 
+polygon(subdate, sub.sst, col='gray70', border=NA, density=50) 
 par(new=TRUE)
 #all <- prop.table(rbind(centric_ave,pennate_ave,dinos_ave,copepod_ave), margin=2)
 #barplot(all, col=c("#a8ddb5","#2ca25f","#feb24c","grey40"), las=2)
@@ -1190,7 +1196,7 @@ barplot(prop.table(phyto_rich, margin=2), las=2, col=c("#a8ddb5","#2ca25f","#feb
 
 ```{r lag analysis, eval=FALSE, include=FALSE}
 #LAGGED CORRELATION Matrix
-source("/Volumes/GoogleDrive/Team Drives/m2w_analysis/analysis/LagAnalysis.R")
+source("/Volumes/GoogleDrive/Shared drives/m2w_analysis/analysis/LagAnalysis.R")
 lagMB <- LAGCOR(otus, lag = 1)
     #reshape
     lagMB <- melt(lagMB)%>%
@@ -1204,7 +1210,7 @@ lagMB <- LAGCOR(otus, lag = 1)
     head(lagMB)
     length(unique(lagMB$Lagging))
 
-    #save(lagMB, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/analysis/LaggedKendall.Rdata")
+    #save(lagMB, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/analysis/LaggedKendall.Rdata")
         
     #especially interesting leading/lagging correlations might be taxa that appear in at least 3-4 time points...
     #and with very high correlation coefficients
@@ -1215,7 +1221,7 @@ lagMB <- LAGCOR(otus, lag = 1)
 
 ####Richness and Pseudoautocorrelation of whole community
 ```{r Richness of total taxa, echo=FALSE, fig.cap="\\label{fig:fig S1}Figure S1: A: Total richness (number of taxa) in Monterey Bay National Marine Sanctuary through April 2015 - December 2016 with sea surface temperature anomaly. B: Pseudo-autocorrelation analyses across all taxa compared to the time point prior to it. First time point is zero due to not having a reference point. The vertical dashed line represents December 31, 2015.", fig.height=8, fig.width=6.5}
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/Supplemental/obs_richness_PA.pdf",height=6,width=9)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/Supplemental/obs_richness_PA.pdf",height=6,width=9)
 par(mar=c(3,4,2,4.5))
 par(mfrow=c(1,2))
 otu_table(MB_all_filt) <- otu_table(round(as((otu_table(MB_all_filt)), "matrix")), taxa_are_rows(MB_all_filt)) #doesn't work to 
@@ -1258,7 +1264,7 @@ dev.off()
 
 ####Heatmap and dendrogram of top taxa
 ```{r heatmap of top taxa, echo=FALSE, fig.cap="\\label{fig:fig S2}Figure S2: Dendrogram of the top 100 taxa for FK left and MB right. Dissimilarity between taxa was calculated based on a Euclidean distance matrix.", fig.height=8, fig.width=10, message=FALSE, warning=FALSE}
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/Supplemental/heatmap.pdf",height=10,width=7)
+#pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/Supplemental/heatmap.pdf",height=10,width=7)
 top_50_MB <- prune_taxa(names(sort(taxa_sums(MB_merge_filt),
          TRUE)[1:100]),MB_merge_filt)
 
@@ -1277,7 +1283,7 @@ boxplot(con_dg$kWithin~con_dg$trophic_lev)
 par(mfcol=c(2,1))
 par(mar=c(1,4,3,2))
 #MB
-plot(MB_merge_filt_t$`f:Noelaerhabdaceae`~MB_merge_filt_t$collection_date,col="#E69F00",type="l", pch=16,lwd=2,ylab=c(""), xlab="",xaxt="n",yaxt="n",ylim=c(0,1.2))
+plot(MB_merge_filt_t$`f:Bacillariaceae`~MB_merge_filt_t$collection_date,col="#E69F00",type="l", pch=16,lwd=2,ylab=c(""), xlab="",xaxt="n",yaxt="n",ylim=c(0,1.2))
 #lines(MB_all_merge$`f:Pelagibacteraceae`~MB_all_merge$collection_date, col="gold", pch=16, lwd=2)
 lines(MB_merge_filt_t$`f:Engraulidae`~MB_merge_filt_t$collection_date,lwd=2, col="darkorange3")
 lines(MB_merge_filt_t$`f:Balaenopteridae`~MB_merge_filt_t$collection_date,lwd=2, 
@@ -1304,13 +1310,13 @@ mtext("2016", side=1, line=3, at=19000,cex=0.7)
 ####Correlation matrix of top taxa
 ```{r plots of correlations, echo=FALSE, fig.cap="\\label{fig:fig S4}Figure S4: Correlation of the top 50 taxa for Monterey Bay only including significant values of a p-value equal to or less than 0.05. These correlation matrices were performed on relative abundance indices and ordered by hierarcical clustering on dissimilarities between taxa", fig.height=8, fig.width=7, message=FALSE, warning=FALSE}
 #MB
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/Supplemental/correlation_top50.pdf",height=8,width=7)
+#pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/Supplemental/correlation_top50.pdf",height=8,width=7)
 top_taxa_merge_MB <- prune_taxa(names(sort(taxa_sums(MB_all_tax_ps_ts_merge),
          TRUE)[1:50]),MB_all_tax_ps_ts_merge) #use transformed merged data
 cor_MB <- as.matrix(top_taxa_merge_MB@otu_table)
 #res2_MB<-rcorr(cor_MB,type="spearman")
 res2_MB <- cor(cor_MB, method="kendall")
-#saveRDS(res2_MB, "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/taxa_cor_MB.Rdata")  
+#saveRDS(res2_MB, "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/taxa_cor_MB.Rdata")  
 corrplot(res2_MB, type="lower", order="hclust", 
           sig.level = 0.05, tl.srt=45,tl.col="black", insig = "blank",tl.cex=0.6,diag=FALSE)
 #dev.off()
@@ -1318,7 +1324,7 @@ corrplot(res2_MB, type="lower", order="hclust",
 
 ```{r Ordinations, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 MB_all_tax_df <- t(data.frame(MB_all_tax_ps_rel@otu_table))
-meta_bioenv<-read.csv("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/m2w_metadata_MB.csv")
+meta_bioenv<-read.csv("/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/m2w_metadata_MB.csv")
 meta_bioenv<-meta_bioenv[,c(18,47,48,49,51,52)]
 bioenv <- bioenv(MB_all_tax_df, meta_bioenv)
 summary(bioenv)
@@ -1375,7 +1381,7 @@ legend("topleft", "B", bty="n")
 #ObservedData
   ###Empirical data, for comparison
   otus<-MB_merged_otu_table
-    #readRDS("/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MB_merged_otu_table.Rdata")
+    #readRDS("/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MB_merged_otu_table.Rdata")
   #filter by sd or some other measure of variance
   otus <- otus[specnumber(otus) > 1 , ]  #must occur in at least 2 time points, with zero abundance being a real data point in this case 
   nonzero<-otus[which(otus!=0|otus!=1)] #index of non-zero and non-one numbers
@@ -1431,7 +1437,7 @@ legend("topleft", "B", bty="n")
                 
 
                 
-#pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/Supplemental/Kendall_correlations.pdf",height=6,width=9)
+#pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/Supplemental/Kendall_correlations.pdf",height=6,width=9)
 #ggplot(data=tmp, aes(y=Adjusted.P, x=Tau))+
 #                  geom_smooth()+
 #                  geom_point()+
@@ -1442,8 +1448,7 @@ legend("topleft", "B", bty="n")
 
 ```{r strong correlation plots}
 gt <- as.character(c("f:Otariidae","f:Carangidae","f:Ellobiopsidae","f:Syndiniaceae","f:Pelagibacteraceae","f:Metridinidae","f:Rhodospirillaceae"))
-gt = prune_taxa(gt,MB_all_filt)
-
+gt = prune_taxa(gt,MB_merge_filt)
 
 foo_gt <-otu_table(gt) %>%
   as.data.frame() %>% 
@@ -1478,15 +1483,15 @@ heatmap.2(abs(cor.mat.gt[strongCorrs_gt, strongCorrs_gt]),dendrogram='none', Row
 z_gt <- t(tidy.gt[strongCorrs_gt,])
 trophicLevels = trophic$trophic_fv[match(colnames(z_gt), trophic$taxa)]
 z_gt <- z_gt[,order(trophicLevels)]  #reorder by trophic level
-
-#source("/Volumes/GoogleDrive/Team Drives/m2w_analysis/analysis/strongCorrsPlot.R")
-pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/grey_strongCor.pdf", width = 10, height = 10)
-strong.corrs.plot(z_gt, cutoff = 0.6)
+exp(z_gt)
+#source("/Volumes/GoogleDrive/Shared drives/m2w_analysis/analysis/strongCorrsPlot.R")
+pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/grey_strongCor.pdf", width = 10, height = 10)
+strong.corrs.plot(log(z_gt+1), cutoff = 0.5)
 dev.off()
 
 ############### BLUE ###########
 
-bt <- as.character(c("f:Gonyaulacaceae","f:Prorocentraceae","f:Chrysolepidomonadaceae","f:Urechidae","f:Balaenopteridae","f:Sugiuridae","f:Rathkeidae","f:Puniceicoccaceae","f:Listeriaceae","f:Euphausiidae","f:Pleurotaceae"))
+bt <- as.character(c("f:Gonyaulacaceae","f:Prorocentraceae","f:Chrysolepidomonadaceae","f:Urechidae","f:Balaenopteridae","f:Euphausiidae","f:Rathkeidae"))
 bt = prune_taxa(bt,MB_all_filt)
 
 
@@ -1524,9 +1529,9 @@ z <- t(tidy.blue[strongCorrs,])
 trophicLevels = trophic$trophic_fv[match(colnames(z), trophic$taxa)]
 z <- z[,order(trophicLevels)]  #reorder by trophic level
 
-#source("/Volumes/GoogleDrive/Team Drives/m2w_analysis/analysis/strongCorrsPlot.R")
-pdf("/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/blue_stronCor.pdf", width = 10, height = 10)
-strong.corrs.plot(z, cutoff = 0.6)
+#source("/Volumes/GoogleDrive/Shared drives/m2w_analysis/analysis/strongCorrsPlot.R")
+pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/blue_strongCor.pdf", width = 10, height = 10)
+strong.corrs.plot(log(z+1), cutoff = 0.42)
 dev.off()
 
 ```
@@ -1545,30 +1550,30 @@ con <- intramodularConnectivity.fromExpr(datExpr_MB, moduleColors_MB,
 con$taxa <- rownames(t(datExpr_MB))
 #blue_MB <- blue_MB[,1]
 con_blue <- con[con$taxa %in% blue_MB, ]
-write.csv(con_blue, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_blue.csv")
-trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
+write.csv(con_blue, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_blue.csv")
+trophic_lev <- read.csv(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/subnetxtrophic_ordered_20181112.csv")
 con_blue$trophic_lev <- trophic_lev$trophic_fv[match(con_blue$taxa, trophic_lev$taxa)]
 
 #dg_MB <- dg_MB[,1]
 con_dg <- con[con$taxa %in% dg_MB, ]
-write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
+write.csv(con_dg, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
 con_dg$trophic_lev <- trophic_lev$trophic_fv[match(con_dg$taxa, trophic_lev$taxa)]
 
-con_green <- con[con$taxa %in% green_MB, ]
-#write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
+con_green <- con[con$taxa %in% green_MB$taxa, ]
 con_green$trophic_lev <- trophic_lev$trophic_fv[match(con_green$taxa, trophic_lev$taxa)]
+write.csv(con_green, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_green.csv")
 
 con_yel <- con[con$taxa %in% yel_MB, ]
-#write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
 con_yel$trophic_lev <- trophic_lev$trophic_fv[match(con_yel$taxa, trophic_lev$taxa)]
+write.csv(con_yel, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_yel.csv")
 
-con_orange <- con[con$taxa %in% orange_MB, ]
-#write.csv(con_orange, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_orange.csv")
+con_orange <- con[con$taxa %in% orange_MB$taxa, ]
 con_orange$trophic_lev <- trophic_lev$trophic_fv[match(con_orange$taxa, trophic_lev$taxa)]
+write.csv(con_orange, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_orange.csv")
 
-con_grey <- con[con$taxa %in% grey_MB, ]
-#write.csv(con_dg, file = "/Volumes/GoogleDrive/Team Drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_dg.csv")
-con_grey$trophic_lev <- trophic_lev$trophic_fv[match(con_grey$taxa, trophic_lev$taxa)]
+con_black <- con[con$taxa %in% grey_MB, ]
+con_black$trophic_lev <- trophic_lev$trophic_fv[match(con_black$taxa, trophic_lev$taxa)]
+write.csv(con_black, file = "/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/con_black.csv")
 
 #Blue and grey separately!
 datExpr_MB_Blue <- subset(datExpr_MB_t,rownames(datExpr_MB_t) %in% blue_MB)
@@ -1586,7 +1591,7 @@ cor_orange <- as.data.frame(abs(cor(as.matrix(t(datExpr_MB_orange)),meta, method
 cor_black <- as.data.frame(abs(cor(as.matrix(t(datExpr_MB_black)),meta, method = "pearson")))
 
 
-pdf(file="/Volumes/GoogleDrive/Team Drives/m2w_analysis/plots/con_cor_env_all.pdf", height=25, width=25)
+pdf(file="/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/con_cor_env_all.pdf", height=25, width=25)
 par(mfrow=c(6,6))
 
 plot(cor_blue$upwelling,con_blue$kWithin)
@@ -1635,3 +1640,14 @@ dev.off()
 
 ```
 
+```{r Climatology}
+climate <- read.csv("/Volumes/GoogleDrive/Shared drives/m2w_analysis/data/MEGAN6/post_decontam/MB/MB_climatology.csv", header=T)
+
+pdf("/Volumes/GoogleDrive/Shared drives/m2w_analysis/plots/climatology.pdf", width = 6, height = 5)
+plot(climate$SST.Clim~dmy(climate$Date), type="l", ylim=c(12,20), lty=2,xaxt="n",xlab="", ylab="Climatology (SST)")
+par(new=TRUE)
+plot(climate$SST.mean~dmy(climate$Date),type="l",ylim=c(12,20),xaxt="n",xlab="", ylab="")
+axis.Date(1,at=dmy(traitData_MB$collection_date),labels=format(dmy(traitData_MB$collection_date),"%b-%d"),las=2)
+legend("topright",legend=c("Climatology", "SST"),ncol=1,col=c("black"), bty="n", lty=c(2,1), cex=0.7)
+dev.off()
+```
